@@ -1,14 +1,6 @@
 # Quilt SDK
 
-Type-safe TypeScript SDK for the [Quilt](https://github.com/anthropics/quilt) container runtime via HTTP API.
-
-## Features
-
-- **Full Type Safety**: TypeScript types for all API operations
-- **31 HTTP API Methods**: Complete API coverage for container, volume, network, and cleanup operations
-- **HTTP REST Client**: Clean HTTP-based communication with the Quilt server
-- **Tool Schemas**: Generic JSON Schema definitions for AI framework integration
-- **Zero Dependencies**: No external dependencies (uses built-in fetch)
+TypeScript SDK for the Quilt container runtime HTTP API. Build secure, isolated execution environments for AI agents.
 
 ## Installation
 
@@ -16,488 +8,495 @@ Type-safe TypeScript SDK for the [Quilt](https://github.com/anthropics/quilt) co
 npm install quilt-sdk
 ```
 
-**Note**: Requires Node.js 18+ for built-in `fetch` support.
+**Requirements**: Node.js 18+ (uses built-in `fetch`)
 
 ## Quick Start
 
 ```typescript
 import Quilt from 'quilt-sdk';
 
-// Connect to Quilt HTTP API
+// Connect to Quilt API
 const quilt = await Quilt.connect({
-  apiBaseUrl: 'http://localhost:8080'
+  apiBaseUrl: 'https://api.quilt.run',  // Production endpoint
+  token: process.env.QUILT_API_KEY       // Optional: Bearer token auth
 });
 
-// Create a container
-const result = await quilt.create({
-  image_path: '/path/to/image.tar',
-  name: 'my-container',
-  command: ['/bin/sh', '-c', 'echo "Hello from Quilt!"'],
-  environment: {
-    NODE_ENV: 'production'
-  },
+// Create isolated container
+const container = await quilt.create({
+  image_path: '/var/lib/quilt/images/python.tar',
+  command: ['python3', '-c', 'print("Hello from Quilt")'],
+  memory_limit_mb: 512,
   async_mode: true
 });
 
-console.log('Container ID:', result.container_id);
-
-// Get container status
-const status = await quilt.status({
-  container_id: result.container_id
+// Execute code
+const result = await quilt.exec({
+  container_id: container.container_id,
+  command: ['python3', 'script.py'],
+  capture_output: true
 });
 
-console.log('State:', status.state);
-console.log('PID:', status.pid);
-console.log('IP Address:', status.ip_address);
+console.log(result.stdout);
+console.log(result.exit_code);
 
 // Cleanup
-await quilt.disconnect();
+await quilt.remove({ container_id: container.container_id });
 ```
 
 ## Configuration
 
-### QuiltClientOptions
-
 ```typescript
 interface QuiltClientOptions {
-  // API base URL (default: "http://localhost:8080")
-  apiBaseUrl?: string;
-
-  // Bearer token for authentication (optional)
-  token?: string;
-
-  // Timeout for HTTP requests in milliseconds (default: 30000)
-  timeout?: number;
+  apiBaseUrl?: string;  // Default: 'http://localhost:8080'
+  token?: string;       // Bearer token for auth
+  timeout?: number;     // Request timeout ms (default: 30000)
 }
 ```
 
-## API Reference
+## Core Operations
 
-### Container Operations (9 methods)
-
-#### createContainer(request)
-Creates a new container with advanced features including namespaces, resource limits, and volume mounts.
+### Container Lifecycle
 
 ```typescript
-const result = await client.createContainer({
-  image_path: '/path/to/image.tar',
-  name: 'my-app',
-  command: ['node', 'server.js'],
-  environment: { PORT: '3000' },
+// Create container
+const c = await quilt.create({
+  image_path: '/var/lib/quilt/images/default.tar',
+  name: 'worker-1',
+  command: ['/bin/sh'],
+  environment: { API_KEY: 'xxx' },
+  memory_limit_mb: 1024,
+  cpu_limit_percent: 50,
+  volumes: ['/host/data:/container/data'],
+  async_mode: true
+});
+
+// Start container
+await quilt.start({ container_id: c.container_id });
+
+// Get status
+const status = await quilt.status({ container_id: c.container_id });
+// Returns: { state: 'Running', pid: 1234, ip_address: '10.42.0.5', ... }
+
+// Stop gracefully
+await quilt.stop({ container_id: c.container_id });
+
+// Force kill
+await quilt.kill({ container_id: c.container_id });
+
+// Remove
+await quilt.remove({ container_id: c.container_id });
+
+// List all containers
+const containers = await quilt.list();
+```
+
+### Code Execution
+
+```typescript
+// Execute command in running container
+const result = await quilt.exec({
+  container_id: 'abc123',
+  command: ['python3', '-c', 'import sys; print(sys.version)'],
   working_directory: '/app',
-  memory_limit_mb: 512,
-  cpu_limit_percent: 50.0,
-  enable_network_namespace: true,
-  async_mode: true,
-  mounts: [
-    {
-      source: '/host/data',
-      target: '/data',
-      type: 'BIND',
-      readonly: false
-    }
-  ]
-});
-```
-
-#### startContainer(request)
-Starts a stopped container.
-
-```typescript
-await client.startContainer({
-  container_id: 'abc123'
-  // or: container_name: 'my-app'
-});
-```
-
-#### stopContainer(request)
-Stops a running container gracefully.
-
-```typescript
-await client.stopContainer({
-  container_id: 'abc123',
-  timeout_seconds: 10
-});
-```
-
-#### killContainer(request)
-Kills a container immediately.
-
-```typescript
-await client.killContainer({
-  container_id: 'abc123'
-});
-```
-
-#### removeContainer(request)
-Removes a container.
-
-```typescript
-await client.removeContainer({
-  container_id: 'abc123',
-  force: true
-});
-```
-
-#### getContainerStatus(request)
-Gets detailed status including CPU, memory, and network info.
-
-```typescript
-const status = await client.getContainerStatus({
-  container_id: 'abc123'
-});
-console.log(status.status); // PENDING, RUNNING, EXITED, FAILED
-console.log(status.memory_usage_bytes);
-console.log(status.ip_address);
-```
-
-#### getContainerLogs(request)
-Gets the logs of a container.
-
-```typescript
-const logs = await client.getContainerLogs({
-  container_id: 'abc123'
-});
-for (const entry of logs.logs) {
-  console.log(entry.timestamp, entry.message);
-}
-```
-
-#### execContainer(request)
-Executes a command in a running container.
-
-```typescript
-const result = await client.execContainer({
-  container_id: 'abc123',
-  command: ['ls', '-la', '/app'],
   capture_output: true
 });
-console.log(result.stdout);
-console.log(result.exit_code);
+
+console.log('Exit Code:', result.exit_code);
+console.log('Output:', result.stdout);
+console.log('Errors:', result.stderr);
 ```
 
-#### getContainerByName(request)
-Gets a container ID by its name.
+### Container Logs
 
 ```typescript
-const result = await client.getContainerByName({
-  name: 'my-app'
-});
-if (result.found) {
-  console.log('Container ID:', result.container_id);
+const logs = await quilt.logs({ container_id: 'abc123' });
+
+for (const entry of logs.logs) {
+  console.log(`[${entry.timestamp}] ${entry.message}`);
 }
 ```
 
-### Volume Management (4 methods)
-
-#### createVolume(request)
-Creates a new named volume.
+### Volume Management
 
 ```typescript
-const volume = await client.createVolume({
-  name: 'data-volume',
+// Create persistent volume
+await quilt.createVolume({
+  name: 'data-vol',
   driver: 'local',
-  labels: { project: 'myapp' }
+  labels: { project: 'agent-workspace' }
 });
+
+// List volumes
+const volumes = await quilt.listVolumes();
+
+// Inspect volume
+const vol = await quilt.inspectVolume({ name: 'data-vol' });
+
+// Remove volume
+await quilt.removeVolume({ name: 'data-vol' });
 ```
 
-#### removeVolume(request)
-Removes a named volume.
+### Monitoring & Metrics
 
 ```typescript
-await client.removeVolume({
-  name: 'data-volume',
-  force: false
-});
-```
-
-#### listVolumes(request)
-Lists all volumes.
-
-```typescript
-const result = await client.listVolumes({
-  filters: { project: 'myapp' }
-});
-for (const volume of result.volumes) {
-  console.log(volume.name, volume.mount_point);
-}
-```
-
-#### inspectVolume(request)
-Inspects a volume to get detailed information.
-
-```typescript
-const result = await client.inspectVolume({
-  name: 'data-volume'
-});
-if (result.found) {
-  console.log(result.volume);
-}
-```
-
-### Health and Monitoring (4 methods)
-
-#### getHealth(request?)
-Gets the health status of the Quilt server.
-
-```typescript
-const health = await client.getHealth();
-console.log(health.healthy);
-console.log(health.uptime_seconds);
-console.log(health.containers_running);
-```
-
-#### getMetrics(request)
-Gets metrics for containers and system.
-
-```typescript
-const metrics = await client.getMetrics({
+// Get container metrics
+const metrics = await quilt.getMetrics({
   container_id: 'abc123',
   include_system: true
 });
-for (const metric of metrics.container_metrics) {
-  console.log('CPU:', metric.cpu_usage_usec);
-  console.log('Memory:', metric.memory_current_bytes);
-  console.log('Network RX:', metric.network_rx_bytes);
-}
+
+console.log('CPU Usage:', metrics.container_metrics[0].cpu_usage_usec);
+console.log('Memory:', metrics.container_metrics[0].memory_current_bytes);
+console.log('Network RX:', metrics.container_metrics[0].network_rx_bytes);
+
+// System info
+const info = await quilt.getSystemInfo();
+console.log('Version:', info.version);
+console.log('Features:', info.features);
 ```
 
-#### getSystemInfo(request?)
-Gets system information.
+### Network Operations
 
 ```typescript
-const info = await client.getSystemInfo();
-console.log('Quilt Version:', info.version);
-console.log('Runtime:', info.runtime);
-```
+// List network allocations
+const allocations = await quilt.listNetworkAllocations();
 
-#### streamEvents(request)
-Streams container events in real-time (AsyncIterator).
-
-```typescript
-for await (const event of client.streamEvents({
-  container_ids: [], // empty = all containers
-  event_types: ['started', 'stopped', 'failed']
-})) {
-  console.log(event.event_type, event.container_id, event.timestamp);
-}
-```
-
-### Container Monitoring (3 methods)
-
-#### listActiveMonitors(request?)
-Lists all active container monitors.
-
-```typescript
-const result = await client.listActiveMonitors();
-```
-
-#### getMonitorStatus(request)
-Gets the status of a specific monitor.
-
-```typescript
-const result = await client.getMonitorStatus({
+// Get container network config
+const network = await quilt.getContainerNetwork({
   container_id: 'abc123'
 });
-```
+console.log('IP:', network.network_config.ip_address);
 
-#### listMonitoringProcesses(request?)
-Lists all monitoring processes.
-
-```typescript
-const result = await client.listMonitoringProcesses();
-```
-
-### Network Operations (4 methods)
-
-#### listNetworkAllocations(request?)
-Lists all network allocations.
-
-```typescript
-const result = await client.listNetworkAllocations();
-for (const alloc of result.allocations) {
-  console.log(alloc.container_id, alloc.ip_address);
-}
-```
-
-#### getContainerNetwork(request)
-Gets network configuration for a container.
-
-```typescript
-const result = await client.getContainerNetwork({
-  container_id: 'abc123'
-});
-console.log(result.network_config.ip_address);
-```
-
-#### setContainerNetwork(request)
-Sets network configuration for a container.
-
-```typescript
-await client.setContainerNetwork({
+// Set IP address
+await quilt.setContainerNetwork({
   container_id: 'abc123',
-  network_config: {
-    ip_address: '10.42.0.10',
-    bridge_interface: 'quilt0'
+  network_config: { ip_address: '10.42.0.100' }
+});
+
+// DNS entries for inter-container communication
+const dns = await quilt.listDNSEntries();
+```
+
+## AI Agent Tool Integration
+
+### OpenAI Function Calling
+
+```typescript
+import Quilt from 'quilt-sdk';
+import OpenAI from 'openai';
+
+const quilt = await Quilt.connect({ apiBaseUrl: 'https://api.quilt.run' });
+const openai = new OpenAI();
+
+// Define tool for agent
+const tools = [{
+  type: "function",
+  function: {
+    name: "execute_python",
+    description: "Execute Python code in isolated container",
+    parameters: {
+      type: "object",
+      properties: {
+        code: { type: "string", description: "Python code to execute" }
+      },
+      required: ["code"]
+    }
   }
+}];
+
+// Tool implementation
+async function executePython(code: string) {
+  const container = await quilt.create({
+    image_path: '/var/lib/quilt/images/python.tar',
+    async_mode: true,
+    memory_limit_mb: 512
+  });
+
+  const result = await quilt.exec({
+    container_id: container.container_id,
+    command: ['python3', '-c', code],
+    capture_output: true
+  });
+
+  await quilt.remove({ container_id: container.container_id });
+
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exit_code: result.exit_code
+  };
+}
+
+// Agent conversation
+const response = await openai.chat.completions.create({
+  model: "gpt-4",
+  messages: [{ role: "user", content: "Calculate fibonacci(10)" }],
+  tools
 });
-```
 
-#### setupContainerNetworkPostStart(request)
-Sets up container network after start.
-
-```typescript
-await client.setupContainerNetworkPostStart({
-  container_id: 'abc123'
-});
-```
-
-### DNS Operations (1 method)
-
-#### listDnsEntries(request?)
-Lists all DNS entries.
-
-```typescript
-const result = await client.listDnsEntries();
-for (const entry of result.entries) {
-  console.log(entry.container_name, entry.ip_address);
+// Execute tool call
+if (response.choices[0].message.tool_calls) {
+  const toolCall = response.choices[0].message.tool_calls[0];
+  const args = JSON.parse(toolCall.function.arguments);
+  const output = await executePython(args.code);
+  console.log(output);
 }
 ```
 
-### Cleanup Operations (6 methods)
-
-#### getCleanupStatus(request)
-Gets cleanup status.
+### Anthropic MCP Integration
 
 ```typescript
-const result = await client.getCleanupStatus({
-  container_id: 'abc123' // or empty for all
-});
+import Quilt from 'quilt-sdk';
+
+const quilt = await Quilt.connect({ apiBaseUrl: 'https://api.quilt.run' });
+
+// Export tool schemas for MCP
+import { QUILT_TOOL_SCHEMAS } from 'quilt-sdk';
+
+// MCP server provides these tools to Claude
+const mcpTools = {
+  "quilt_execute": {
+    description: "Execute code in isolated container",
+    inputSchema: QUILT_TOOL_SCHEMAS.CreateContainer.input_schema,
+    handler: async (args: any) => {
+      const container = await quilt.create(args);
+      const result = await quilt.exec({
+        container_id: container.container_id,
+        command: args.command,
+        capture_output: true
+      });
+      await quilt.remove({ container_id: container.container_id });
+      return result;
+    }
+  }
+};
 ```
 
-#### listCleanupTasks(request?)
-Lists all cleanup tasks.
+## Production Use Cases
+
+### 1. Code Sandbox for AI Agents
 
 ```typescript
-const result = await client.listCleanupTasks();
+// Agent executes user-provided code safely
+async function runCodeSandbox(code: string, language: string) {
+  const imageMap = {
+    python: '/var/lib/quilt/images/python.tar',
+    node: '/var/lib/quilt/images/node.tar',
+    rust: '/var/lib/quilt/images/rust.tar'
+  };
+
+  const container = await quilt.create({
+    image_path: imageMap[language],
+    memory_limit_mb: 512,
+    cpu_limit_percent: 25,
+    async_mode: true
+  });
+
+  try {
+    const result = await quilt.exec({
+      container_id: container.container_id,
+      command: [language === 'python' ? 'python3' : language, '-c', code],
+      capture_output: true
+    });
+
+    return {
+      success: result.exit_code === 0,
+      output: result.stdout,
+      error: result.stderr
+    };
+  } finally {
+    await quilt.remove({ container_id: container.container_id });
+  }
+}
 ```
 
-#### getCleanupTaskStatus(request)
-Gets status of a specific cleanup task.
+### 2. Data Processing Pipeline
 
 ```typescript
-const result = await client.getCleanupTaskStatus({
-  task_id: 123
-});
+// Agent processes CSV data in isolated environment
+async function processData(csvPath: string, script: string) {
+  // Create volume for data
+  await quilt.createVolume({ name: 'data-vol' });
+
+  const container = await quilt.create({
+    image_path: '/var/lib/quilt/images/python-data.tar',
+    volumes: [`${csvPath}:/data/input.csv`, 'data-vol:/data/output'],
+    memory_limit_mb: 2048,
+    async_mode: true
+  });
+
+  await quilt.exec({
+    container_id: container.container_id,
+    command: ['python3', '/data/process.py'],
+    working_directory: '/data',
+    capture_output: true
+  });
+
+  const logs = await quilt.logs({ container_id: container.container_id });
+
+  await quilt.remove({ container_id: container.container_id });
+  await quilt.removeVolume({ name: 'data-vol' });
+
+  return logs;
+}
 ```
 
-#### listContainerCleanupTasks(request)
-Lists cleanup tasks for a container.
+### 3. Multi-Container Agent Workflow
 
 ```typescript
-const result = await client.listContainerCleanupTasks({
-  container_id: 'abc123'
-});
+// Agent orchestrates multiple containers with networking
+async function runDistributedTask() {
+  // Create worker containers
+  const workers = await Promise.all([
+    quilt.create({ name: 'worker-1', async_mode: true }),
+    quilt.create({ name: 'worker-2', async_mode: true }),
+    quilt.create({ name: 'worker-3', async_mode: true })
+  ]);
+
+  // Get network info for inter-container communication
+  const dns = await quilt.listDNSEntries();
+  console.log('Worker IPs:', dns.entries.map(e => `${e.name}: ${e.ip_address}`));
+
+  // Execute parallel tasks
+  const results = await Promise.all(
+    workers.map(w => quilt.exec({
+      container_id: w.container_id,
+      command: ['./process_chunk.sh'],
+      capture_output: true
+    }))
+  );
+
+  // Cleanup
+  await Promise.all(workers.map(w => quilt.remove({ container_id: w.container_id })));
+
+  return results;
+}
 ```
 
-#### forceCleanup(request)
-Forces cleanup of a container.
+### 4. Long-Running Agent Services
 
 ```typescript
-const result = await client.forceCleanup({
-  container_id: 'abc123'
-});
-console.log(result.cleaned_resources);
-```
+// Agent maintains persistent service container
+async function deployAgentService() {
+  const container = await quilt.create({
+    name: 'agent-api',
+    image_path: '/var/lib/quilt/images/node-api.tar',
+    command: ['node', 'server.js'],
+    environment: {
+      PORT: '3000',
+      NODE_ENV: 'production'
+    },
+    memory_limit_mb: 1024,
+    async_mode: true
+  });
 
-#### comprehensiveNetworkCleanup(request?)
-Performs comprehensive network cleanup.
+  // Get assigned IP
+  const network = await quilt.getContainerNetwork({
+    container_id: container.container_id
+  });
 
-```typescript
-const result = await client.comprehensiveNetworkCleanup();
-console.log(result.cleaned_resources);
+  console.log(`Service running at http://${network.network_config.ip_address}:3000`);
+
+  // Monitor service
+  setInterval(async () => {
+    const status = await quilt.status({ container_id: container.container_id });
+    const metrics = await quilt.getMetrics({ container_id: container.container_id });
+
+    console.log('Status:', status.state);
+    console.log('Memory:', metrics.container_metrics[0].memory_current_bytes);
+  }, 30000);
+
+  return container;
+}
 ```
 
 ## Error Handling
 
-The SDK throws specific error types for different failure scenarios:
-
 ```typescript
-import {
-  QuiltConnectionError,
-  QuiltRPCError,
-  QuiltServerError
-} from 'quilt-sdk';
+import { QuiltConnectionError, QuiltApiError } from 'quilt-sdk';
 
 try {
-  await client.createContainer({ /* ... */ });
+  const container = await quilt.create({ /* ... */ });
 } catch (error) {
   if (error instanceof QuiltConnectionError) {
-    console.error('Connection failed:', error.serverAddress);
-  } else if (error instanceof QuiltRPCError) {
-    console.error('RPC failed:', error.method, error.code);
-  } else if (error instanceof QuiltServerError) {
-    console.error('Server error:', error.message);
+    console.error('Failed to connect to Quilt API:', error.apiBaseUrl);
+  } else if (error instanceof QuiltApiError) {
+    console.error(`API error in ${error.method}:`, error.message);
+    console.error('Status code:', error.statusCode);
+    console.error('Details:', error.details);
   }
 }
 ```
 
-## Tool Schemas for AI Frameworks
+## API Methods Reference
 
-The SDK exports Generic JSON Schema definitions for all methods:
+### Container Operations (9)
+- `create(params)` - Create container
+- `start(params)` - Start container
+- `stop(params)` - Stop container gracefully
+- `kill(params)` - Force kill container
+- `remove(params)` - Remove container
+- `status(params)` - Get container status
+- `list()` - List all containers
+- `logs(params)` - Get container logs
+- `exec(params)` - Execute command
+- `getContainerByName(params)` - Lookup by name
+
+### Volume Operations (4)
+- `createVolume(params)` - Create volume
+- `removeVolume(params)` - Remove volume
+- `listVolumes()` - List volumes
+- `inspectVolume(params)` - Inspect volume
+
+### Health & System (3)
+- `health()` - Server health check
+- `getMetrics(params)` - Container/system metrics
+- `getSystemInfo()` - System information
+
+### Monitoring (3)
+- `listMonitors()` - List active monitors
+- `getMonitorStatus(params)` - Get monitor status
+- `listMonitoringProcesses()` - List monitoring processes
+
+### Network (4)
+- `listNetworkAllocations()` - List network allocations
+- `getContainerNetwork(params)` - Get network config
+- `setContainerNetwork(params)` - Set network config
+- `setupContainerNetworkPostStart(params)` - Setup network
+
+### DNS (1)
+- `listDNSEntries()` - List DNS entries
+
+### Cleanup (6)
+- `getCleanupStatus()` - Cleanup status
+- `listCleanupTasks()` - List cleanup tasks
+- `getCleanupTaskStatus(params)` - Task status
+- `listContainerCleanupTasks(params)` - Container cleanup tasks
+- `forceCleanupContainer(params)` - Force cleanup
+- `comprehensiveNetworkCleanup(params)` - Network cleanup
+
+## TypeScript Types
+
+Full TypeScript definitions included:
 
 ```typescript
-import { QUILT_TOOL_SCHEMAS, getToolSchema } from 'quilt-sdk';
+import { QuiltTypes } from 'quilt-sdk';
 
-// Get all schemas
-console.log(QUILT_TOOL_SCHEMAS);
-
-// Get specific schema
-const schema = getToolSchema('CreateContainer');
-console.log(schema.input_schema);
-```
-
-These schemas are compatible with AI frameworks that support tool calling (OpenAI, Anthropic, etc.).
-
-## Development
-
-### Build from Source
-
-```bash
-# Install dependencies
-npm install
-
-# Generate TypeScript from proto
-npm run generate
-
-# Build TypeScript
-npm run build
-
-# Run example
-node examples/basic.js
-```
-
-### Project Structure
-
-```
-quilt-sdk/
-├── src/
-│   ├── index.ts       # Main export
-│   ├── client.ts      # QuiltClient (31 methods)
-│   ├── server.ts      # Server lifecycle management
-│   ├── types.ts       # Type definitions
-│   └── schemas.ts     # Tool schemas
-├── proto/
-│   └── quilt.proto    # gRPC service definition
-├── bin/
-│   └── quilt          # Quilt server binary
-└── dist/              # Compiled output
+const request: QuiltTypes.CreateContainerRequest = {
+  image_path: '/path/to/image.tar',
+  command: ['python3', 'app.py'],
+  environment: { KEY: 'value' },
+  memory_limit_mb: 512
+};
 ```
 
 ## License
 
-MIT OR Apache-2.0
+MIT
 
-## Contributing
+## Links
 
-Contributions are welcome! Please see the main [Quilt repository](https://github.com/anthropics/quilt) for guidelines.
+- **Documentation**: https://docs.quilt.run
+- **API Reference**: https://api.quilt.run/docs
+- **GitHub**: https://github.com/saint0x/quilt-sdk-prod
+- **Issues**: https://github.com/saint0x/quilt-sdk-prod/issues
