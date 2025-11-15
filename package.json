@@ -1,0 +1,36 @@
+{
+  "name": "quilt-sdk",
+  "version": "2.0.0",
+  "description": "TypeScript SDK for Quilt container runtime (HTTP API client)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf dist",
+    "test": "node examples/basic.js"
+  },
+  "keywords": [
+    "quilt",
+    "containers",
+    "http",
+    "rest",
+    "typescript",
+    "sdk"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "spec.json"
+  ]
+}

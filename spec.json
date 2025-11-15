@@ -1,0 +1,281 @@
+{
+  "name": "Quilt SDK",
+  "version": "0.1.0",
+  "description": "Type-safe TypeScript SDK for Quilt container runtime",
+  "protocol": "gRPC",
+  "default_endpoint": "127.0.0.1:50051",
+  "service": "QuiltService",
+  "methods": [
+    {
+      "name": "CreateContainer",
+      "category": "Container Operations",
+      "description": "Creates a new container with advanced features including namespaces, resource limits, and volume mounts",
+      "rpc_type": "unary",
+      "request": "CreateContainerRequest",
+      "response": "CreateContainerResponse"
+    },
+    {
+      "name": "StartContainer",
+      "category": "Container Operations",
+      "description": "Starts a stopped container",
+      "rpc_type": "unary",
+      "request": "StartContainerRequest",
+      "response": "StartContainerResponse"
+    },
+    {
+      "name": "StopContainer",
+      "category": "Container Operations",
+      "description": "Stops a running container gracefully",
+      "rpc_type": "unary",
+      "request": "StopContainerRequest",
+      "response": "StopContainerResponse"
+    },
+    {
+      "name": "KillContainer",
+      "category": "Container Operations",
+      "description": "Kills a container immediately",
+      "rpc_type": "unary",
+      "request": "KillContainerRequest",
+      "response": "KillContainerResponse"
+    },
+    {
+      "name": "RemoveContainer",
+      "category": "Container Operations",
+      "description": "Removes a container",
+      "rpc_type": "unary",
+      "request": "RemoveContainerRequest",
+      "response": "RemoveContainerResponse"
+    },
+    {
+      "name": "GetContainerStatus",
+      "category": "Container Operations",
+      "description": "Gets the detailed status of a container",
+      "rpc_type": "unary",
+      "request": "GetContainerStatusRequest",
+      "response": "GetContainerStatusResponse"
+    },
+    {
+      "name": "GetContainerLogs",
+      "category": "Container Operations",
+      "description": "Gets the logs of a container",
+      "rpc_type": "unary",
+      "request": "GetContainerLogsRequest",
+      "response": "GetContainerLogsResponse"
+    },
+    {
+      "name": "ExecContainer",
+      "category": "Container Operations",
+      "description": "Executes a command in a running container",
+      "rpc_type": "unary",
+      "request": "ExecContainerRequest",
+      "response": "ExecContainerResponse"
+    },
+    {
+      "name": "GetContainerByName",
+      "category": "Container Operations",
+      "description": "Gets a container ID by its name",
+      "rpc_type": "unary",
+      "request": "GetContainerByNameRequest",
+      "response": "GetContainerByNameResponse"
+    },
+    {
+      "name": "CreateVolume",
+      "category": "Volume Management",
+      "description": "Creates a new named volume",
+      "rpc_type": "unary",
+      "request": "CreateVolumeRequest",
+      "response": "CreateVolumeResponse"
+    },
+    {
+      "name": "RemoveVolume",
+      "category": "Volume Management",
+      "description": "Removes a named volume",
+      "rpc_type": "unary",
+      "request": "RemoveVolumeRequest",
+      "response": "RemoveVolumeResponse"
+    },
+    {
+      "name": "ListVolumes",
+      "category": "Volume Management",
+      "description": "Lists all volumes",
+      "rpc_type": "unary",
+      "request": "ListVolumesRequest",
+      "response": "ListVolumesResponse"
+    },
+    {
+      "name": "InspectVolume",
+      "category": "Volume Management",
+      "description": "Inspects a volume to get detailed information",
+      "rpc_type": "unary",
+      "request": "InspectVolumeRequest",
+      "response": "InspectVolumeResponse"
+    },
+    {
+      "name": "GetHealth",
+      "category": "Health and Monitoring",
+      "description": "Gets the health status of the Quilt server",
+      "rpc_type": "unary",
+      "request": "GetHealthRequest",
+      "response": "GetHealthResponse"
+    },
+    {
+      "name": "GetMetrics",
+      "category": "Health and Monitoring",
+      "description": "Gets metrics for containers and system",
+      "rpc_type": "unary",
+      "request": "GetMetricsRequest",
+      "response": "GetMetricsResponse"
+    },
+    {
+      "name": "GetSystemInfo",
+      "category": "Health and Monitoring",
+      "description": "Gets system information including version and runtime",
+      "rpc_type": "unary",
+      "request": "GetSystemInfoRequest",
+      "response": "GetSystemInfoResponse"
+    },
+    {
+      "name": "StreamEvents",
+      "category": "Health and Monitoring",
+      "description": "Streams container events in real-time",
+      "rpc_type": "server_streaming",
+      "request": "StreamEventsRequest",
+      "response": "ContainerEvent"
+    },
+    {
+      "name": "ListActiveMonitors",
+      "category": "Container Monitoring",
+      "description": "Lists all active container monitors",
+      "rpc_type": "unary",
+      "request": "ListActiveMonitorsRequest",
+      "response": "ListActiveMonitorsResponse"
+    },
+    {
+      "name": "GetMonitorStatus",
+      "category": "Container Monitoring",
+      "description": "Gets the status of a specific container monitor",
+      "rpc_type": "unary",
+      "request": "GetMonitorStatusRequest",
+      "response": "GetMonitorStatusResponse"
+    },
+    {
+      "name": "ListMonitoringProcesses",
+      "category": "Container Monitoring",
+      "description": "Lists all monitoring processes",
+      "rpc_type": "unary",
+      "request": "ListMonitoringProcessesRequest",
+      "response": "ListMonitoringProcessesResponse"
+    },
+    {
+      "name": "ListNetworkAllocations",
+      "category": "Network Operations",
+      "description": "Lists all network allocations for containers",
+      "rpc_type": "unary",
+      "request": "ListNetworkAllocationsRequest",
+      "response": "ListNetworkAllocationsResponse"
+    },
+    {
+      "name": "GetContainerNetwork",
+      "category": "Network Operations",
+      "description": "Gets the network configuration for a container",
+      "rpc_type": "unary",
+      "request": "GetContainerNetworkRequest",
+      "response": "GetContainerNetworkResponse"
+    },
+    {
+      "name": "SetContainerNetwork",
+      "category": "Network Operations",
+      "description": "Sets the network configuration for a container",
+      "rpc_type": "unary",
+      "request": "SetContainerNetworkRequest",
+      "response": "SetContainerNetworkResponse"
+    },
+    {
+      "name": "SetupContainerNetworkPostStart",
+      "category": "Network Operations",
+      "description": "Sets up container network after container start",
+      "rpc_type": "unary",
+      "request": "SetupContainerNetworkPostStartRequest",
+      "response": "SetupContainerNetworkPostStartResponse"
+    },
+    {
+      "name": "ListDnsEntries",
+      "category": "DNS Operations",
+      "description": "Lists all DNS entries for containers",
+      "rpc_type": "unary",
+      "request": "ListDnsEntriesRequest",
+      "response": "ListDnsEntriesResponse"
+    },
+    {
+      "name": "GetCleanupStatus",
+      "category": "Cleanup Operations",
+      "description": "Gets the cleanup status for containers",
+      "rpc_type": "unary",
+      "request": "GetCleanupStatusRequest",
+      "response": "GetCleanupStatusResponse"
+    },
+    {
+      "name": "ListCleanupTasks",
+      "category": "Cleanup Operations",
+      "description": "Lists all cleanup tasks",
+      "rpc_type": "unary",
+      "request": "ListCleanupTasksRequest",
+      "response": "ListCleanupTasksResponse"
+    },
+    {
+      "name": "GetCleanupTaskStatus",
+      "category": "Cleanup Operations",
+      "description": "Gets the status of a specific cleanup task",
+      "rpc_type": "unary",
+      "request": "GetCleanupTaskStatusRequest",
+      "response": "GetCleanupTaskStatusResponse"
+    },
+    {
+      "name": "ListContainerCleanupTasks",
+      "category": "Cleanup Operations",
+      "description": "Lists cleanup tasks for a specific container",
+      "rpc_type": "unary",
+      "request": "ListContainerCleanupTasksRequest",
+      "response": "ListContainerCleanupTasksResponse"
+    },
+    {
+      "name": "ForceCleanup",
+      "category": "Cleanup Operations",
+      "description": "Forces cleanup of a container and its resources",
+      "rpc_type": "unary",
+      "request": "ForceCleanupRequest",
+      "response": "ForceCleanupResponse"
+    },
+    {
+      "name": "ComprehensiveNetworkCleanup",
+      "category": "Cleanup Operations",
+      "description": "Performs comprehensive network cleanup of all resources",
+      "rpc_type": "unary",
+      "request": "ComprehensiveNetworkCleanupRequest",
+      "response": "ComprehensiveNetworkCleanupResponse"
+    }
+  ],
+  "enums": {
+    "ContainerStatus": {
+      "description": "Container status enumeration",
+      "values": {
+        "PENDING": 0,
+        "RUNNING": 1,
+        "EXITED": 2,
+        "FAILED": 3
+      }
+    },
+    "MountType": {
+      "description": "Mount type enumeration",
+      "values": {
+        "BIND": 0,
+        "VOLUME": 1,
+        "TMPFS": 2
+      }
+    }
+  },
+  "usage_example": {
+    "language": "typescript",
+    "code": "import { QuiltClient } from 'quilt-sdk';\n\nconst client = new QuiltClient({ autoStart: true });\nawait client.connect();\n\nconst result = await client.createContainer({\n  image_path: '/path/to/image.tar',\n  name: 'my-container',\n  command: ['/bin/sh', '-c', 'echo Hello']\n});\n\nconsole.log('Container ID:', result.container_id);\n\nawait client.disconnect();"
+  }
+}
