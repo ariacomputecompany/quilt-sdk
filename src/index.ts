@@ -35,6 +35,17 @@ export * from './types';
 // HTTP client (for advanced use)
 export { HttpClient, QuiltHttpError } from './http-client';
 
+// Configuration utilities
+export {
+  loadConfig,
+  saveConfig,
+  resolveConfig,
+  getConfigPath,
+  configExists,
+  ensureConfigDir,
+} from './config';
+export type { QuiltConfig, ResolvedConfig } from './config';
+
 // TypeScript interfaces (clean, type-safe API)
 export * as QuiltTypes from './interfaces';
 

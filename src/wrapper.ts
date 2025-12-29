@@ -20,6 +20,7 @@ import {
   VOLUME_DEFAULTS,
   METRICS_DEFAULTS,
 } from './utils/defaults';
+import { loadConfig, resolveConfig } from './config';
 
 /**
  * Main Quilt class - clean, type-safe container runtime client
@@ -42,9 +43,12 @@ export default class Quilt {
   private readonly options: { apiBaseUrl: string; token?: string; timeout: number };
 
   constructor(options: QuiltClientOptions = {}) {
+    // Support apiKey as an alias for token
+    const token = options.apiKey || options.token;
+
     this.options = {
       apiBaseUrl: options.apiBaseUrl || 'http://localhost:8080',
-      token: options.token,
+      token,
       timeout: options.timeout || 30000,
     };
 
@@ -58,12 +62,33 @@ export default class Quilt {
   /**
    * Static factory method for clean initialization
    *
+   * Automatically loads configuration from ~/.quilt/config.json if no explicit
+   * token/apiKey is provided. Environment variables QUILT_API_KEY and
+   * QUILT_API_BASE_URL take precedence over config file values.
+   *
    * @example
    * ```typescript
+   * // Auto-load from config file
+   * const quilt = await Quilt.connect();
+   *
+   * // Or provide explicit options
    * const quilt = await Quilt.connect({ apiBaseUrl: 'http://localhost:8080' });
    * ```
    */
   static async connect(options?: QuiltClientOptions): Promise<Quilt> {
+    // Auto-load config if no explicit token/apiKey provided
+    if (!options?.token && !options?.apiKey) {
+      const config = loadConfig();
+      const resolved = resolveConfig(config);
+
+      options = {
+        ...options,
+        apiBaseUrl: options?.apiBaseUrl || resolved.apiBaseUrl,
+        token: resolved.apiKey,
+        timeout: options?.timeout || resolved.timeout,
+      };
+    }
+
     const quilt = new Quilt(options);
     await quilt.connect();
     return quilt;

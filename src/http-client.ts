@@ -76,7 +76,12 @@ export class HttpClient {
     };
 
     if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+      // If token looks like an API key (starts with quilt_sk_), use X-Api-Key header
+      if (this.token.startsWith('quilt_sk_')) {
+        headers['X-Api-Key'] = this.token;
+      } else {
+        headers['Authorization'] = `Bearer ${this.token}`;
+      }
     }
 
     const controller = new AbortController();

@@ -13,8 +13,16 @@ export interface QuiltClientOptions {
 
   /**
    * Bearer token for authentication (optional)
+   * Use for JWT tokens
    */
   token?: string;
+
+  /**
+   * API key for authentication (optional)
+   * Format: quilt_sk_<32-hex-chars>
+   * Alias for token - if both are provided, apiKey takes precedence
+   */
+  apiKey?: string;
 
   /**
    * Timeout for HTTP requests in milliseconds (default: 30000)
