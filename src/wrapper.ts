@@ -267,14 +267,41 @@ export default class Quilt {
 
   /**
    * Execute a command in a running container
+   *
+   * Supports multiple command formats:
+   * - command: "string" - Simple command (wrapped in sh -c)
+   * - command: ["array"] - Command with arguments
+   * - command: { cmd_b64: "base64" } - Base64-encoded script
+   * - command: { parts_b64: ["b64", "parts"] } - Base64-encoded parts
+   * - script: "multiline\nscript" - Auto-encoded to base64
    */
   async exec(params: Record<string, unknown>): Promise<I.ExecContainerResponse> {
     const withDefaults = { ...EXEC_DEFAULTS, ...params };
     const normalized = normalize<I.ExecContainerRequest>(withDefaults);
     const containerId = normalized.container_id || await this.resolveContainerId(normalized.container_name);
 
+    // Build command body - handle different formats
+    let commandBody: unknown;
+
+    if (normalized.script) {
+      // Auto-encode script to base64 for multi-line support
+      const encoded = Buffer.from(normalized.script).toString('base64');
+      commandBody = { cmd_b64: encoded };
+    } else if (typeof normalized.command === 'string') {
+      // String command - send as-is (backend wraps in sh -c)
+      commandBody = normalized.command;
+    } else if (Array.isArray(normalized.command)) {
+      // Array command - send as-is
+      commandBody = normalized.command;
+    } else if (normalized.command && typeof normalized.command === 'object') {
+      // Structured command (cmd_b64 or parts_b64) - pass through
+      commandBody = normalized.command;
+    } else {
+      throw new Error('exec requires command or script parameter');
+    }
+
     const body = {
-      command: normalized.command,
+      command: commandBody,
       workdir: normalized.working_directory,
       capture_output: normalized.capture_output,
     };

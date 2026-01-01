@@ -35,6 +35,10 @@ const PROPERTY_MAP: Record<string, string> = {
   capture: 'capture_output',
   include: 'include_system',
 
+  // Base64 command aliases
+  cmdB64: 'cmd_b64',
+  partsB64: 'parts_b64',
+
   // CamelCase to snake_case
   imagePath: 'image_path',
   workingDirectory: 'working_directory',

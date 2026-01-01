@@ -213,13 +213,36 @@ export interface RemoveContainerResponse {
   error_message: string;
 }
 
+/**
+ * Structured command with base64 encoding support
+ */
+export interface StructuredCommand {
+  /** Plain text command (string or array) */
+  cmd?: string | string[];
+  /** Single base64-encoded script (decoded and wrapped in sh -c) */
+  cmd_b64?: string;
+  /** Base64-encoded command parts (each decoded separately) */
+  parts_b64?: string[];
+}
+
+/**
+ * Command input - supports multiple formats:
+ * - string: Simple command (wrapped in sh -c by backend)
+ * - string[]: Command with arguments
+ * - StructuredCommand: Base64-encoded commands for special characters
+ */
+export type CommandInput = string | string[] | StructuredCommand;
+
 export interface ExecContainerRequest {
   container_id?: string;
-  command: string[];
+  container_name?: string;
+  /** Command to execute (string, array, or structured with base64) */
+  command?: CommandInput;
+  /** Convenience: multi-line script (auto-encoded to base64) */
+  script?: string;
   working_directory?: string;
   environment?: Record<string, string>;
   capture_output?: boolean;
-  container_name?: string;
   copy_script?: boolean;
 }
 
