@@ -324,7 +324,7 @@ await quilt.exec({
 - ✅ Non-blocking execution
 - ✅ Full isolation
 - ✅ Network connectivity
-- ✅ 26 type-safe operations
+- ✅ 41 type-safe operations (26 container + 15 serverless)
 
 **What agents focus on**:
 - What command to run
@@ -332,3 +332,266 @@ await quilt.exec({
 - What resources required (optional)
 
 No infrastructure concerns. Just tasks.
+
+---
+
+## Serverless Functions
+
+Quilt SDK also provides a serverless function layer for event-driven workloads with automatic container pool management.
+
+### Quick Start
+
+```typescript
+// Create and deploy function
+await quilt.createFunction({
+  name: 'data-processor',
+  runtime: 'node20',
+  handler: 'index.handler',
+  code: 's3://bucket/code.zip',
+  memory: 256,
+  timeout: 60
+});
+
+// Deploy (warm containers)
+await quilt.deployFunction({ name: 'data-processor', pool: 3 });
+
+// Invoke
+const result = await quilt.invoke({
+  name: 'data-processor',
+  payload: { userId: 123, action: 'process' }
+});
+
+console.log(result.output);  // Function output
+console.log(result.duration_ms);  // Execution time
+console.log(result.cold_start);  // Was it a cold start?
+```
+
+### Zero Configuration
+
+Agents don't need to specify:
+- ❌ Memory limits (default: 128MB)
+- ❌ Timeout (default: 300s)
+- ❌ Pool configuration (auto-managed)
+- ❌ Container lifecycle (automatic)
+
+### Function Lifecycle
+
+```
+PENDING (created)
+    ↓ deploy
+DEPLOYING (warming containers)
+    ↓
+ACTIVE (accepting invocations)
+    ↓ pause
+PAUSED (scaled to zero)
+    ↓ resume
+ACTIVE
+
+ERROR (recoverable via rollback)
+```
+
+### Supported Runtimes
+
+| Runtime | Value |
+|---------|-------|
+| Node.js 18 | `node18` |
+| Node.js 20 | `node20` |
+| Python 3.11 | `python3.11` |
+| Python 3.12 | `python3.12` |
+| Go 1.21 | `go1.21` |
+| Rust 1.75 | `rust1.75` |
+
+### Function Operations (15 tools)
+
+**CRUD Operations:**
+- `create_function` - Register new function
+- `get_function` - Get function details
+- `list_functions` - List with filters
+- `update_function` - Update config
+- `delete_function` - Delete and cleanup
+
+**Lifecycle Management:**
+- `deploy_function` - Warm containers and activate
+- `pause_function` - Scale to zero
+- `resume_function` - Resume from pause
+
+**Invocation:**
+- `invoke_function` - Execute function (sync/async)
+- `list_invocations` - Invocation history
+- `get_invocation` - Get invocation result
+
+**Versioning:**
+- `list_function_versions` - Version history
+- `rollback_function` - Rollback to version
+
+**Pool Management:**
+- `get_pool_status` - Function pool containers
+- `get_pool_stats` - Global pool metrics
+
+### Property Aliases (Functions)
+
+Use whichever style is natural:
+
+| Short | CamelCase | Canonical |
+|-------|-----------|-----------|
+| `fn` | `functionId` | `function_id` |
+| `fnName` | `functionName` | `function_name` |
+| `code` | `codeSource` | `code_source` |
+| `pool` | `poolSize` | `pool_size` |
+| `timeout` | `timeoutSeconds` | `timeout_seconds` |
+| `memory` | `memoryLimitMb` | `memory_limit_mb` |
+| `drain` | `drainTimeoutSeconds` | `drain_timeout_seconds` |
+| `async` | `asyncMode` | `async_mode` |
+
+### Smart Defaults (Functions)
+
+Applied automatically:
+
+```typescript
+{
+  timeout_seconds: 300,      // 5 minutes
+  memory_limit_mb: 128,      // Minimal footprint
+  async_mode: false,         // Sync invoke (get result)
+  pool_size: 1,              // At least one warm container
+  drain_timeout_seconds: 30, // Wait for in-flight requests
+}
+```
+
+### Common Patterns
+
+#### Event-Driven Processing
+```typescript
+// Create processor
+await quilt.createFunction({
+  name: 'event-processor',
+  runtime: 'python3.12',
+  handler: 'main.handle_event',
+  code: 'git://github.com/org/processor.git'
+});
+
+// Deploy with warm pool
+await quilt.deployFunction({ name: 'event-processor', pool: 5 });
+
+// Async batch invoke
+for (const event of events) {
+  await quilt.invoke({
+    name: 'event-processor',
+    payload: event,
+    async: true  // Fire and forget
+  });
+}
+```
+
+#### Data Pipeline
+```typescript
+// Stage 1: Extract
+const extracted = await quilt.invoke({
+  name: 'extract',
+  payload: { source: 'api' }
+});
+
+// Stage 2: Transform
+const transformed = await quilt.invoke({
+  name: 'transform',
+  payload: JSON.parse(extracted.output)
+});
+
+// Stage 3: Load
+await quilt.invoke({
+  name: 'load',
+  payload: JSON.parse(transformed.output)
+});
+```
+
+#### Monitoring & Debugging
+```typescript
+// Check invocation history
+const { invocations } = await quilt.listInvocations({
+  name: 'my-function',
+  state: 'failed',
+  limit: 10
+});
+
+// Get specific invocation details
+for (const inv of invocations) {
+  const details = await quilt.getInvocation({
+    name: 'my-function',
+    invocationId: inv.invocation_id
+  });
+  console.log(`Error: ${details.invocation?.error_message}`);
+}
+
+// Check pool health
+const { stats } = await quilt.getPoolStats();
+console.log(`Cold start rate: ${(stats.cold_start_rate * 100).toFixed(1)}%`);
+```
+
+#### Version Rollback
+```typescript
+// List versions
+const { versions } = await quilt.listVersions({ name: 'my-function' });
+
+// Rollback if needed
+if (errorRate > threshold) {
+  await quilt.rollbackFunction({
+    name: 'my-function',
+    targetVersion: versions[1].version  // Previous version
+  });
+}
+```
+
+### Error Handling (Functions)
+
+```typescript
+try {
+  const result = await quilt.invoke({
+    name: 'my-function',
+    payload: { data: 'input' }
+  });
+
+  if (!result.success) {
+    console.error('Function error:', result.error_message);
+  }
+} catch (error) {
+  if (error instanceof QuiltApiError) {
+    console.error('API error:', error.message);
+    console.error('Status code:', error.statusCode);
+  }
+}
+```
+
+### CLI Quick Reference
+
+```bash
+# List functions
+quilt functions
+quilt fn  # alias
+
+# Create function
+quilt fn-create --name handler --runtime node20 --handler index.handler --code s3://bucket/code.zip
+
+# Get details
+quilt fn-get handler
+
+# Deploy
+quilt deploy handler --pool 3
+
+# Invoke
+quilt invoke handler --payload '{"userId": 123}'
+quilt invoke handler --async  # Fire and forget
+
+# Pause/Resume
+quilt pause handler
+quilt resume handler --pool 2
+
+# View invocations
+quilt invocations handler --limit 20
+
+# Version management
+quilt versions handler
+quilt rollback handler --version 1
+
+# Pool status
+quilt pool handler    # Function-specific
+quilt pool           # Global stats
+```

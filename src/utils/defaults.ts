@@ -80,3 +80,57 @@ export const CLIENT_DEFAULTS = {
   apiBaseUrl: 'http://localhost:8080',
   timeout: 30000,
 };
+
+// ============================================================================
+// SERVERLESS FUNCTION DEFAULTS
+// ============================================================================
+
+/**
+ * Default function creation options
+ *
+ * Key design decisions:
+ * - timeout_seconds: 300 (5 min - reasonable for most functions)
+ * - memory_limit_mb: 128 (minimal footprint)
+ */
+export const FUNCTION_DEFAULTS = {
+  timeout_seconds: 300,
+  memory_limit_mb: 128,
+};
+
+/**
+ * Default function invoke options
+ *
+ * - Synchronous invocation for immediate response
+ * - Timeout matches function default
+ */
+export const INVOKE_DEFAULTS = {
+  async_mode: false,
+  timeout_seconds: 300,
+};
+
+/**
+ * Default deploy options
+ *
+ * - pool_size: 1 (at least one warm container)
+ */
+export const DEPLOY_DEFAULTS = {
+  pool_size: 1,
+};
+
+/**
+ * Default pause options
+ *
+ * - drain_timeout_seconds: 30 (wait for in-flight requests)
+ */
+export const PAUSE_DEFAULTS = {
+  drain_timeout_seconds: 30,
+};
+
+/**
+ * Default resume options
+ *
+ * - pool_size: 1 (at least one warm container)
+ */
+export const RESUME_DEFAULTS = {
+  pool_size: 1,
+};

@@ -56,4 +56,13 @@ export * from './tools';
 export * from './schemas';
 
 // Package version
-export const VERSION = '2.0.0';
+export const VERSION = '2.1.0';
+
+// Serverless function defaults (for reference)
+export {
+  FUNCTION_DEFAULTS,
+  INVOKE_DEFAULTS,
+  DEPLOY_DEFAULTS,
+  PAUSE_DEFAULTS,
+  RESUME_DEFAULTS,
+} from './utils/defaults';
