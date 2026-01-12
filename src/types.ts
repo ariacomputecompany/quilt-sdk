@@ -90,3 +90,50 @@ export enum EventTypeEnum {
   CLEANUP_STARTED = 6,
   CLEANUP_COMPLETED = 7,
 }
+
+// ============================================================================
+// SERVERLESS FUNCTION TYPES
+// ============================================================================
+
+/**
+ * Function state machine states
+ * Matches backend: Pending -> Deploying -> Active -> Paused -> Error
+ */
+export enum FunctionState {
+  PENDING = 'pending',
+  DEPLOYING = 'deploying',
+  ACTIVE = 'active',
+  PAUSED = 'paused',
+  ERROR = 'error',
+}
+
+/**
+ * Function runtime types
+ */
+export enum FunctionRuntime {
+  NODE_18 = 'node18',
+  NODE_20 = 'node20',
+  PYTHON_3_11 = 'python3.11',
+  PYTHON_3_12 = 'python3.12',
+  GO_1_21 = 'go1.21',
+  RUST_1_75 = 'rust1.75',
+}
+
+/**
+ * Pool container states
+ */
+export enum PoolContainerState {
+  READY = 'ready',
+  BUSY = 'busy',
+  STALE = 'stale',
+}
+
+/**
+ * Invocation states
+ */
+export enum InvocationState {
+  PENDING = 'pending',
+  RUNNING = 'running',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+}

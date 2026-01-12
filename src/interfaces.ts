@@ -547,3 +547,321 @@ export interface ComprehensiveNetworkCleanupResponse {
   success: boolean;
   error_message: string;
 }
+
+// ============================================================================
+// SERVERLESS FUNCTION OPERATIONS
+// ============================================================================
+
+/**
+ * Function definition with runtime config and resource limits
+ */
+export interface Function {
+  function_id: string;
+  tenant_id?: string;
+  name: string;
+  description?: string;
+  runtime: string;
+  handler: string;
+  code_source: string;
+  code_hash?: string;
+  state: string;
+  timeout_seconds: number;
+  memory_limit_mb: number;
+  environment?: Record<string, string>;
+  labels?: Record<string, string>;
+  version: number;
+  created_at: number;
+  updated_at: number;
+  last_invoked_at?: number;
+  invocation_count: number;
+  error_count: number;
+  avg_duration_ms: number;
+}
+
+/**
+ * Function version snapshot for rollback
+ */
+export interface FunctionVersion {
+  version_id: string;
+  function_id: string;
+  version: number;
+  code_hash: string;
+  runtime: string;
+  handler: string;
+  created_at: number;
+  description?: string;
+}
+
+/**
+ * Invocation tracking record
+ */
+export interface FunctionInvocation {
+  invocation_id: string;
+  function_id: string;
+  function_name: string;
+  version: number;
+  state: string;
+  cold_start: boolean;
+  started_at: number;
+  completed_at?: number;
+  duration_ms?: number;
+  input_payload?: string;
+  output_payload?: string;
+  error_message?: string;
+  container_id?: string;
+  memory_used_mb?: number;
+}
+
+/**
+ * Pool container entry
+ */
+export interface PoolContainer {
+  container_id: string;
+  function_id: string;
+  state: string;
+  invocation_count: number;
+  max_invocations: number;
+  created_at: number;
+  last_used_at: number;
+}
+
+/**
+ * Pool statistics
+ */
+export interface PoolStats {
+  total_containers: number;
+  ready_containers: number;
+  busy_containers: number;
+  total_functions: number;
+  functions_with_pools: number;
+  avg_pool_size: number;
+  total_invocations: number;
+  cold_starts: number;
+  warm_hits: number;
+  cold_start_rate: number;
+}
+
+// ── Create Function ──────────────────────────────────────────────────────────
+
+export interface CreateFunctionRequest {
+  name: string;
+  runtime: string;
+  handler: string;
+  code_source: string;
+  description?: string;
+  timeout_seconds?: number;
+  memory_limit_mb?: number;
+  environment?: Record<string, string>;
+  labels?: Record<string, string>;
+}
+
+export interface CreateFunctionResponse {
+  function_id: string;
+  name: string;
+  state: string;
+}
+
+// ── Get Function ─────────────────────────────────────────────────────────────
+
+export interface GetFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+}
+
+export interface GetFunctionResponse {
+  found: boolean;
+  function?: Function;
+  error_message: string;
+}
+
+// ── List Functions ───────────────────────────────────────────────────────────
+
+export interface ListFunctionsRequest {
+  state?: string;
+  runtime?: string;
+  labels?: Record<string, string>;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ListFunctionsResponse {
+  functions: Function[];
+  total_count: number;
+}
+
+// ── Update Function ──────────────────────────────────────────────────────────
+
+export interface UpdateFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  description?: string;
+  handler?: string;
+  code_source?: string;
+  timeout_seconds?: number;
+  memory_limit_mb?: number;
+  environment?: Record<string, string>;
+  labels?: Record<string, string>;
+}
+
+export interface UpdateFunctionResponse {
+  success: boolean;
+  error_message: string;
+  function?: Function;
+}
+
+// ── Delete Function ──────────────────────────────────────────────────────────
+
+export interface DeleteFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  force?: boolean;
+}
+
+export interface DeleteFunctionResponse {
+  success: boolean;
+  error_message: string;
+}
+
+// ── Deploy Function ──────────────────────────────────────────────────────────
+
+export interface DeployFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  pool_size?: number;
+}
+
+export interface DeployFunctionResponse {
+  success: boolean;
+  error_message: string;
+  state: string;
+  containers_warmed: number;
+}
+
+// ── Pause Function ───────────────────────────────────────────────────────────
+
+export interface PauseFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  drain_timeout_seconds?: number;
+}
+
+export interface PauseFunctionResponse {
+  success: boolean;
+  error_message: string;
+  containers_drained: number;
+}
+
+// ── Resume Function ──────────────────────────────────────────────────────────
+
+export interface ResumeFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  pool_size?: number;
+}
+
+export interface ResumeFunctionResponse {
+  success: boolean;
+  error_message: string;
+  state: string;
+}
+
+// ── Invoke Function ──────────────────────────────────────────────────────────
+
+export interface InvokeFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  payload?: string | Record<string, unknown>;
+  async_mode?: boolean;
+  timeout_seconds?: number;
+}
+
+export interface InvokeFunctionResponse {
+  invocation_id: string;
+  success: boolean;
+  cold_start: boolean;
+  duration_ms?: number;
+  output?: string;
+  error_message: string;
+}
+
+// ── List Invocations ─────────────────────────────────────────────────────────
+
+export interface ListInvocationsRequest {
+  function_id?: string;
+  function_name?: string;
+  state?: string;
+  start_time?: number;
+  end_time?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ListInvocationsResponse {
+  invocations: FunctionInvocation[];
+  total_count: number;
+}
+
+// ── Get Invocation ───────────────────────────────────────────────────────────
+
+export interface GetInvocationRequest {
+  function_id?: string;
+  function_name?: string;
+  invocation_id: string;
+}
+
+export interface GetInvocationResponse {
+  found: boolean;
+  invocation?: FunctionInvocation;
+  error_message: string;
+}
+
+// ── List Versions ────────────────────────────────────────────────────────────
+
+export interface ListVersionsRequest {
+  function_id?: string;
+  function_name?: string;
+  limit?: number;
+}
+
+export interface ListVersionsResponse {
+  versions: FunctionVersion[];
+}
+
+// ── Rollback Function ────────────────────────────────────────────────────────
+
+export interface RollbackFunctionRequest {
+  function_id?: string;
+  function_name?: string;
+  target_version: number;
+}
+
+export interface RollbackFunctionResponse {
+  success: boolean;
+  error_message: string;
+  current_version: number;
+  function?: Function;
+}
+
+// ── Pool Status ──────────────────────────────────────────────────────────────
+
+export interface GetPoolStatusRequest {
+  function_id?: string;
+  function_name?: string;
+}
+
+export interface GetPoolStatusResponse {
+  function_id: string;
+  containers: PoolContainer[];
+  ready_count: number;
+  busy_count: number;
+}
+
+// ── Pool Stats ───────────────────────────────────────────────────────────────
+
+export interface GetPoolStatsRequest {
+  // Empty
+}
+
+export interface GetPoolStatsResponse {
+  stats: PoolStats;
+}

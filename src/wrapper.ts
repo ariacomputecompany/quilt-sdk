@@ -19,6 +19,11 @@ import {
   STOP_DEFAULTS,
   VOLUME_DEFAULTS,
   METRICS_DEFAULTS,
+  FUNCTION_DEFAULTS,
+  INVOKE_DEFAULTS,
+  DEPLOY_DEFAULTS,
+  PAUSE_DEFAULTS,
+  RESUME_DEFAULTS,
 } from './utils/defaults';
 import { loadConfig, resolveConfig } from './config';
 
@@ -730,5 +735,435 @@ export default class Quilt {
     }
 
     return result.container_id;
+  }
+
+  /**
+   * Resolve function name to ID
+   */
+  private async resolveFunctionId(name?: string): Promise<string> {
+    if (!name) {
+      throw new Error('Either function_id or function_name must be provided');
+    }
+
+    const result = await this.getFunctionByName({ name });
+
+    if (!result.found || !result.function?.function_id) {
+      throw new Error(`Function '${name}' not found`);
+    }
+
+    return result.function.function_id;
+  }
+
+  // ============================================================================
+  // SERVERLESS FUNCTION OPERATIONS
+  // ============================================================================
+
+  /**
+   * Create a new serverless function
+   *
+   * @example
+   * ```typescript
+   * await quilt.createFunction({
+   *   name: 'my-handler',
+   *   runtime: 'node20',
+   *   handler: 'index.handler',
+   *   code: 's3://bucket/code.zip',
+   *   memory: 256,
+   *   timeout: 60
+   * });
+   * ```
+   */
+  async createFunction(params: Record<string, unknown>): Promise<I.CreateFunctionResponse> {
+    const withDefaults = { ...FUNCTION_DEFAULTS, ...params };
+    const normalized = normalize<I.CreateFunctionRequest>(withDefaults);
+
+    try {
+      return await this.http.post<I.CreateFunctionResponse>('/api/functions', normalized);
+    } catch (error) {
+      return this.handleError(error, 'createFunction');
+    }
+  }
+
+  /**
+   * Get function details by ID or name
+   */
+  async getFunction(params: Record<string, unknown>): Promise<I.GetFunctionResponse> {
+    const normalized = normalize<I.GetFunctionRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    try {
+      const fn = await this.http.get<I.Function>(`/api/functions/${functionId}`);
+      return { found: true, function: fn, error_message: '' };
+    } catch (error) {
+      if (error instanceof QuiltHttpError && error.statusCode === 404) {
+        return { found: false, error_message: 'Function not found' };
+      }
+      return this.handleError(error, 'getFunction');
+    }
+  }
+
+  /**
+   * Get function by name
+   */
+  async getFunctionByName(params: Record<string, unknown>): Promise<I.GetFunctionResponse> {
+    const normalized = normalize<{ name: string }>(params);
+
+    try {
+      const fn = await this.http.get<I.Function>(`/api/functions/by-name/${normalized.name}`);
+      return { found: true, function: fn, error_message: '' };
+    } catch (error) {
+      if (error instanceof QuiltHttpError && error.statusCode === 404) {
+        return { found: false, error_message: 'Function not found' };
+      }
+      return this.handleError(error, 'getFunctionByName');
+    }
+  }
+
+  /**
+   * List all functions with optional filters
+   */
+  async listFunctions(params: Record<string, unknown> = {}): Promise<I.ListFunctionsResponse> {
+    const normalized = normalize<I.ListFunctionsRequest>(params);
+
+    let path = '/api/functions';
+    const queryParams: string[] = [];
+
+    if (normalized.state) queryParams.push(`state=${normalized.state}`);
+    if (normalized.runtime) queryParams.push(`runtime=${normalized.runtime}`);
+    if (normalized.limit) queryParams.push(`limit=${normalized.limit}`);
+    if (normalized.offset) queryParams.push(`offset=${normalized.offset}`);
+
+    if (queryParams.length > 0) {
+      path += `?${queryParams.join('&')}`;
+    }
+
+    try {
+      return await this.http.get<I.ListFunctionsResponse>(path);
+    } catch (error) {
+      return this.handleError(error, 'listFunctions');
+    }
+  }
+
+  /**
+   * Update function configuration
+   */
+  async updateFunction(params: Record<string, unknown>): Promise<I.UpdateFunctionResponse> {
+    const normalized = normalize<I.UpdateFunctionRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    const body: Record<string, unknown> = {};
+    if (normalized.description !== undefined) body.description = normalized.description;
+    if (normalized.handler !== undefined) body.handler = normalized.handler;
+    if (normalized.code_source !== undefined) body.code_source = normalized.code_source;
+    if (normalized.timeout_seconds !== undefined) body.timeout_seconds = normalized.timeout_seconds;
+    if (normalized.memory_limit_mb !== undefined) body.memory_limit_mb = normalized.memory_limit_mb;
+    if (normalized.environment !== undefined) body.environment = normalized.environment;
+    if (normalized.labels !== undefined) body.labels = normalized.labels;
+
+    try {
+      const fn = await this.http.put<I.Function>(`/api/functions/${functionId}`, body);
+      return { success: true, error_message: '', function: fn };
+    } catch (error) {
+      return this.handleError(error, 'updateFunction');
+    }
+  }
+
+  /**
+   * Delete a function
+   */
+  async deleteFunction(params: Record<string, unknown>): Promise<I.DeleteFunctionResponse> {
+    const normalized = normalize<I.DeleteFunctionRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    let path = `/api/functions/${functionId}`;
+    if (normalized.force) {
+      path += '?force=true';
+    }
+
+    try {
+      await this.http.delete(path);
+      return { success: true, error_message: '' };
+    } catch (error) {
+      return this.handleError(error, 'deleteFunction');
+    }
+  }
+
+  /**
+   * Deploy function - warm containers and activate
+   *
+   * @example
+   * ```typescript
+   * await quilt.deployFunction({
+   *   name: 'my-handler',
+   *   pool: 3  // Pre-warm 3 containers
+   * });
+   * ```
+   */
+  async deployFunction(params: Record<string, unknown>): Promise<I.DeployFunctionResponse> {
+    const withDefaults = { ...DEPLOY_DEFAULTS, ...params };
+    const normalized = normalize<I.DeployFunctionRequest>(withDefaults);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    const body = { pool_size: normalized.pool_size };
+
+    try {
+      return await this.http.post<I.DeployFunctionResponse>(`/api/functions/${functionId}/deploy`, body);
+    } catch (error) {
+      return this.handleError(error, 'deployFunction');
+    }
+  }
+
+  /**
+   * Pause function - scale to zero
+   */
+  async pauseFunction(params: Record<string, unknown>): Promise<I.PauseFunctionResponse> {
+    const withDefaults = { ...PAUSE_DEFAULTS, ...params };
+    const normalized = normalize<I.PauseFunctionRequest>(withDefaults);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    const body = { drain_timeout_seconds: normalized.drain_timeout_seconds };
+
+    try {
+      return await this.http.post<I.PauseFunctionResponse>(`/api/functions/${functionId}/pause`, body);
+    } catch (error) {
+      return this.handleError(error, 'pauseFunction');
+    }
+  }
+
+  /**
+   * Resume paused function
+   */
+  async resumeFunction(params: Record<string, unknown>): Promise<I.ResumeFunctionResponse> {
+    const withDefaults = { ...RESUME_DEFAULTS, ...params };
+    const normalized = normalize<I.ResumeFunctionRequest>(withDefaults);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    const body = { pool_size: normalized.pool_size };
+
+    try {
+      return await this.http.post<I.ResumeFunctionResponse>(`/api/functions/${functionId}/resume`, body);
+    } catch (error) {
+      return this.handleError(error, 'resumeFunction');
+    }
+  }
+
+  /**
+   * Invoke a function
+   *
+   * @example
+   * ```typescript
+   * // Synchronous invoke (default)
+   * const result = await quilt.invoke({
+   *   name: 'my-handler',
+   *   payload: { userId: 123 }
+   * });
+   *
+   * // Async invoke
+   * const { invocation_id } = await quilt.invoke({
+   *   name: 'my-handler',
+   *   payload: { userId: 123 },
+   *   async: true
+   * });
+   * ```
+   */
+  async invoke(params: Record<string, unknown>): Promise<I.InvokeFunctionResponse> {
+    const withDefaults = { ...INVOKE_DEFAULTS, ...params };
+    const normalized = normalize<I.InvokeFunctionRequest>(withDefaults);
+
+    // Support invoke by name or ID
+    let path: string;
+    if (normalized.function_name && !normalized.function_id) {
+      path = `/api/functions/invoke/${normalized.function_name}`;
+    } else {
+      const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+      path = `/api/functions/${functionId}/invoke`;
+    }
+
+    // Build payload
+    let payload: string | undefined;
+    if (normalized.payload) {
+      payload = typeof normalized.payload === 'string'
+        ? normalized.payload
+        : JSON.stringify(normalized.payload);
+    }
+
+    const body = {
+      payload,
+      async_mode: normalized.async_mode,
+      timeout_seconds: normalized.timeout_seconds,
+    };
+
+    try {
+      return await this.http.post<I.InvokeFunctionResponse>(path, body);
+    } catch (error) {
+      return this.handleError(error, 'invoke');
+    }
+  }
+
+  /**
+   * List function invocations
+   */
+  async listInvocations(params: Record<string, unknown>): Promise<I.ListInvocationsResponse> {
+    const normalized = normalize<I.ListInvocationsRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    let path = `/api/functions/${functionId}/invocations`;
+    const queryParams: string[] = [];
+
+    if (normalized.state) queryParams.push(`state=${normalized.state}`);
+    if (normalized.start_time) queryParams.push(`start_time=${normalized.start_time}`);
+    if (normalized.end_time) queryParams.push(`end_time=${normalized.end_time}`);
+    if (normalized.limit) queryParams.push(`limit=${normalized.limit}`);
+    if (normalized.offset) queryParams.push(`offset=${normalized.offset}`);
+
+    if (queryParams.length > 0) {
+      path += `?${queryParams.join('&')}`;
+    }
+
+    try {
+      return await this.http.get<I.ListInvocationsResponse>(path);
+    } catch (error) {
+      return this.handleError(error, 'listInvocations');
+    }
+  }
+
+  /**
+   * Get specific invocation result
+   */
+  async getInvocation(params: Record<string, unknown>): Promise<I.GetInvocationResponse> {
+    const normalized = normalize<I.GetInvocationRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    try {
+      const invocation = await this.http.get<I.FunctionInvocation>(
+        `/api/functions/${functionId}/invocations/${normalized.invocation_id}`
+      );
+      return { found: true, invocation, error_message: '' };
+    } catch (error) {
+      if (error instanceof QuiltHttpError && error.statusCode === 404) {
+        return { found: false, error_message: 'Invocation not found' };
+      }
+      return this.handleError(error, 'getInvocation');
+    }
+  }
+
+  /**
+   * List function versions
+   */
+  async listVersions(params: Record<string, unknown>): Promise<I.ListVersionsResponse> {
+    const normalized = normalize<I.ListVersionsRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    let path = `/api/functions/${functionId}/versions`;
+    if (normalized.limit) {
+      path += `?limit=${normalized.limit}`;
+    }
+
+    try {
+      return await this.http.get<I.ListVersionsResponse>(path);
+    } catch (error) {
+      return this.handleError(error, 'listVersions');
+    }
+  }
+
+  /**
+   * Rollback function to a previous version
+   */
+  async rollbackFunction(params: Record<string, unknown>): Promise<I.RollbackFunctionResponse> {
+    const normalized = normalize<I.RollbackFunctionRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    const body = { target_version: normalized.target_version };
+
+    try {
+      return await this.http.post<I.RollbackFunctionResponse>(`/api/functions/${functionId}/rollback`, body);
+    } catch (error) {
+      return this.handleError(error, 'rollbackFunction');
+    }
+  }
+
+  /**
+   * Get function pool status
+   */
+  async getPoolStatus(params: Record<string, unknown>): Promise<I.GetPoolStatusResponse> {
+    const normalized = normalize<I.GetPoolStatusRequest>(params);
+    const functionId = normalized.function_id || await this.resolveFunctionId(normalized.function_name);
+
+    try {
+      return await this.http.get<I.GetPoolStatusResponse>(`/api/functions/${functionId}/pool`);
+    } catch (error) {
+      return this.handleError(error, 'getPoolStatus');
+    }
+  }
+
+  /**
+   * Get global pool statistics
+   */
+  async getPoolStats(): Promise<I.GetPoolStatsResponse> {
+    try {
+      return await this.http.get<I.GetPoolStatsResponse>('/api/functions/pool/stats');
+    } catch (error) {
+      return this.handleError(error, 'getPoolStats');
+    }
+  }
+
+  // ============================================================================
+  // CONVENIENCE ALIASES
+  // ============================================================================
+
+  /**
+   * Alias for listNetworkAllocations
+   */
+  async listNetworks(): Promise<I.ListNetworkAllocationsResponse> {
+    return this.listNetworkAllocations();
+  }
+
+  /**
+   * Alias for listDNSEntries
+   */
+  async listDns(): Promise<I.ListDnsEntriesResponse> {
+    return this.listDNSEntries();
+  }
+
+  /**
+   * Alias for listCleanupTasks
+   */
+  async listCleanup(): Promise<I.ListCleanupTasksResponse> {
+    return this.listCleanupTasks();
+  }
+
+  /**
+   * Alias for forceCleanupContainer
+   */
+  async forceCleanup(params: Record<string, unknown>): Promise<I.ForceCleanupResponse> {
+    return this.forceCleanupContainer(params);
+  }
+
+  /**
+   * Alias for comprehensiveNetworkCleanup
+   */
+  async networkCleanup(params: Record<string, unknown> = {}): Promise<I.ComprehensiveNetworkCleanupResponse> {
+    return this.comprehensiveNetworkCleanup(params);
+  }
+
+  /**
+   * Alias for getCleanupStatus
+   */
+  async cleanup(params: Record<string, unknown> = {}): Promise<I.GetCleanupStatusResponse> {
+    return this.getCleanupStatus();
+  }
+
+  /**
+   * Alias for getMetrics
+   */
+  async metrics(params: Record<string, unknown> = {}): Promise<I.GetMetricsResponse> {
+    return this.getMetrics(params);
+  }
+
+  /**
+   * Alias for getSystemInfo
+   */
+  async info(): Promise<I.GetSystemInfoResponse> {
+    return this.getSystemInfo();
   }
 }

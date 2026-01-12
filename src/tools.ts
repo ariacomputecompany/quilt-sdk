@@ -409,5 +409,247 @@ export const QUILT_TOOLS: OpenAITool[] = [
         properties: {}
       }
     }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SERVERLESS FUNCTION OPERATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  {
+    type: 'function',
+    function: {
+      name: 'create_function',
+      description: 'Create a serverless function with runtime, handler, and code source. Supports Node.js, Python, Go, and Rust runtimes.',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Unique function name' },
+          runtime: { type: 'string', enum: ['node18', 'node20', 'python3.11', 'python3.12', 'go1.21', 'rust1.75'], description: 'Runtime environment' },
+          handler: { type: 'string', description: 'Entry point (e.g., index.handler)' },
+          code: { type: 'string', description: 'Code source: S3 URL, git URL, or inline base64' },
+          description: { type: 'string', description: 'Function description' },
+          timeout: { type: 'number', description: 'Max execution time in seconds (default: 300)' },
+          memory: { type: 'number', description: 'Memory limit in MB (default: 128)' },
+          env: { type: 'object', description: 'Environment variables' },
+          labels: { type: 'object', description: 'Metadata labels' }
+        },
+        required: ['name', 'runtime', 'handler', 'code']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_function',
+      description: 'Get function details: state, config, metrics, version.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_functions',
+      description: 'List all serverless functions. Filter by state, runtime, or labels.',
+      parameters: {
+        type: 'object',
+        properties: {
+          state: { type: 'string', enum: ['pending', 'deploying', 'active', 'paused', 'error'], description: 'Filter by state' },
+          runtime: { type: 'string', description: 'Filter by runtime' },
+          limit: { type: 'number', description: 'Max results (default: 100)' },
+          offset: { type: 'number', description: 'Pagination offset' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'update_function',
+      description: 'Update function configuration: handler, code, resources, env vars.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          handler: { type: 'string', description: 'New handler' },
+          code: { type: 'string', description: 'New code source' },
+          timeout: { type: 'number', description: 'New timeout in seconds' },
+          memory: { type: 'number', description: 'New memory limit in MB' },
+          env: { type: 'object', description: 'New environment variables' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'delete_function',
+      description: 'Delete function and cleanup resources.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          force: { type: 'boolean', description: 'Force delete even if active' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'deploy_function',
+      description: 'Deploy function: warm containers and activate. Reduces cold start latency.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          pool: { type: 'number', description: 'Number of containers to pre-warm (default: 1)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'pause_function',
+      description: 'Pause function: scale to zero, drain active connections.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          drain: { type: 'number', description: 'Drain timeout in seconds (default: 30)' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'resume_function',
+      description: 'Resume paused function and optionally pre-warm containers.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          pool: { type: 'number', description: 'Containers to pre-warm' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'invoke_function',
+      description: 'Invoke function with payload. Sync (default) returns result, async returns invocation ID.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          payload: { type: ['string', 'object'], description: 'Input payload (JSON object or string)' },
+          async: { type: 'boolean', description: 'Async invocation (default: false)' },
+          timeout: { type: 'number', description: 'Invocation timeout in seconds' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_invocations',
+      description: 'List function invocations with state, timing, and results.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          state: { type: 'string', enum: ['pending', 'running', 'completed', 'failed'], description: 'Filter by state' },
+          limit: { type: 'number', description: 'Max results' },
+          offset: { type: 'number', description: 'Pagination offset' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_invocation',
+      description: 'Get invocation details: timing, output, errors, cold start info.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          invocationId: { type: 'string', description: 'Invocation ID' }
+        },
+        required: ['invocationId']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'list_function_versions',
+      description: 'List function version history for rollback.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          limit: { type: 'number', description: 'Max versions to return' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'rollback_function',
+      description: 'Rollback function to a previous version.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' },
+          targetVersion: { type: 'number', description: 'Version number to rollback to' }
+        },
+        required: ['targetVersion']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_pool_status',
+      description: 'Get function container pool status: ready/busy containers.',
+      parameters: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'Function ID' },
+          name: { type: 'string', description: 'Function name' }
+        }
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_pool_stats',
+      description: 'Get global pool statistics: total containers, cold start rate, utilization.',
+      parameters: {
+        type: 'object',
+        properties: {}
+      }
+    }
   }
 ];

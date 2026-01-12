@@ -1,6 +1,6 @@
 {
   "name": "quilt-sdk",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "TypeScript SDK and CLI for Quilt container runtime",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,6 +22,9 @@
   "keywords": [
     "quilt",
     "containers",
+    "serverless",
+    "functions",
+    "faas",
     "cli",
     "http",
     "rest",
