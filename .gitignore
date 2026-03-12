@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.tsbuildinfo
+src/generated/platform-contract.ts
+.DS_Store
+.env
+.env.*
+*.log

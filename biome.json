@@ -1,0 +1,26 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "files": {
+    "ignore": ["src/generated/platform-contract.ts", "dist/**", "node_modules/**"]
+  },
+  "organizeImports": { "enabled": true },
+  "formatter": { "enabled": true, "indentStyle": "space", "lineWidth": 100 },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "nursery": { "useSortedClasses": "off" },
+      "complexity": { "useLiteralKeys": "off" },
+      "style": {
+        "useNodejsImportProtocol": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error"
+      }
+    }
+  }
+}
