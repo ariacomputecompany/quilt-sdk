@@ -1,105 +1,160 @@
 import type { QuiltClient } from "../core/client";
 
+export interface QuiltFunction {
+  id: string;
+  tenant_id: string;
+  owner_node_id: string;
+  name: string;
+  description: string | null;
+  handler: string;
+  runtime: string;
+  state: string;
+  current_version: number;
+  memory_limit_mb: number;
+  cpu_limit_percent: number;
+  timeout_seconds: number;
+  environment: Record<string, string>;
+  min_instances: number;
+  max_instances: number;
+  cleanup_on_exit: boolean;
+  working_directory: string | null;
+  created_at: number;
+  updated_at: number;
+  last_invoked_at: number | null;
+  invocation_count: number;
+  error_count: number;
+  error_message: string | null;
+}
+
+export interface QuiltInvocation {
+  invocation_id: string;
+  function_id: string;
+  function_name: string;
+  execution_node_id: string;
+  status: string;
+  started_at: number;
+  ended_at: number | null;
+  duration_ms: number | null;
+  exit_code: number | null;
+  stdout: string | null;
+  stderr: string | null;
+  error_message: string | null;
+  cold_start: boolean;
+}
+
+export interface QuiltFunctionVersion {
+  id: string;
+  function_id: string;
+  version: number;
+  handler: string;
+  runtime: string;
+  environment: Record<string, string>;
+  created_at: number;
+  is_active: boolean;
+  description: string | null;
+}
+
+export interface QuiltFunctionPoolStatus {
+  function_id: string;
+  warming_count: number;
+  ready_count: number;
+  busy_count: number;
+  total_count: number;
+}
+
+export interface QuiltGlobalFunctionPoolStats {
+  total_containers: number;
+  warming_containers: number;
+  ready_containers: number;
+  busy_containers: number;
+  recycling_containers: number;
+  terminating_containers: number;
+}
+
 export class FunctionsModule {
   public constructor(private readonly client: QuiltClient) {}
 
-  public list() {
-    return this.client.get("/api/functions");
+  public list(): Promise<{ functions: QuiltFunction[] }> {
+    return this.client.raw("GET", "/api/functions");
   }
 
-  public create(body: Record<string, unknown>) {
-    return this.client.post("/api/functions", { body });
+  public create(body: Record<string, unknown>): Promise<{
+    function_id: string;
+    name: string;
+    state: string;
+    version: number;
+  }> {
+    return this.client.raw("POST", "/api/functions", { body });
   }
 
-  public get(id: string) {
-    return this.client.get("/api/functions/{id}", { pathParams: { id } });
+  public get(id: string): Promise<QuiltFunction> {
+    return this.client.raw("GET", `/api/functions/${encodeURIComponent(id)}`);
   }
 
-  public update(id: string, body: Record<string, unknown>) {
-    return this.client.put("/api/functions/{id}", {
-      pathParams: { id },
-      body,
-    });
+  public update(id: string, body: Record<string, unknown>): Promise<QuiltFunction> {
+    return this.client.raw("PUT", `/api/functions/${encodeURIComponent(id)}`, { body });
   }
 
-  public delete(id: string) {
-    return this.client.delete("/api/functions/{id}", { pathParams: { id } });
+  public delete(id: string): Promise<void> {
+    return this.client.raw("DELETE", `/api/functions/${encodeURIComponent(id)}`);
   }
 
-  public byName(name: string) {
-    return this.client.get("/api/functions/by-name/{name}", {
-      pathParams: { name },
-    });
+  public byName(name: string): Promise<QuiltFunction> {
+    return this.client.raw("GET", `/api/functions/by-name/${encodeURIComponent(name)}`);
   }
 
-  public deploy(id: string) {
-    return this.client.post("/api/functions/{id}/deploy", {
-      pathParams: { id },
-    });
+  public deploy(id: string): Promise<QuiltFunction> {
+    return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/deploy`);
   }
 
-  public pause(id: string) {
-    return this.client.post("/api/functions/{id}/pause", {
-      pathParams: { id },
-    });
+  public pause(id: string): Promise<{ success: boolean; message?: string | null }> {
+    return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/pause`);
   }
 
-  public resume(id: string) {
-    return this.client.post("/api/functions/{id}/resume", {
-      pathParams: { id },
-    });
+  public resume(id: string): Promise<QuiltFunction> {
+    return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/resume`);
   }
 
-  public invoke(id: string, body: Record<string, unknown> = {}) {
-    return this.client.post("/api/functions/{id}/invoke", {
-      pathParams: { id },
-      body,
-    });
+  public invoke(id: string, body: Record<string, unknown> = {}): Promise<QuiltInvocation> {
+    return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/invoke`, { body });
   }
 
-  public invokeByName(name: string, body: Record<string, unknown> = {}) {
-    return this.client.post("/api/functions/invoke/{name}", {
-      pathParams: { name },
-      body,
-    });
+  public invokeByName(
+    name: string,
+    body: Record<string, unknown> = {},
+  ): Promise<QuiltInvocation> {
+    return this.client.raw("POST", `/api/functions/invoke/${encodeURIComponent(name)}`, { body });
   }
 
-  public listInvocations(id: string, query?: { limit?: number }) {
-    return this.client.get("/api/functions/{id}/invocations", {
-      pathParams: { id },
-      query,
-    });
+  public listInvocations(
+    id: string,
+    query?: { limit?: number },
+  ): Promise<{ invocations: QuiltInvocation[] }> {
+    const suffix =
+      query?.limit !== undefined ? `?limit=${encodeURIComponent(String(query.limit))}` : "";
+    return this.client.raw("GET", `/api/functions/${encodeURIComponent(id)}/invocations${suffix}`);
   }
 
-  public getInvocation(functionId: string, invocationId: string) {
-    return this.client.get("/api/functions/{function_id}/invocations/{invocation_id}", {
-      pathParams: {
-        function_id: functionId,
-        invocation_id: invocationId,
-      },
-    });
+  public getInvocation(functionId: string, invocationId: string): Promise<QuiltInvocation> {
+    return this.client.raw(
+      "GET",
+      `/api/functions/${encodeURIComponent(functionId)}/invocations/${encodeURIComponent(invocationId)}`,
+    );
   }
 
-  public listVersions(id: string) {
-    return this.client.get("/api/functions/{id}/versions", {
-      pathParams: { id },
-    });
+  public listVersions(id: string): Promise<{ versions: QuiltFunctionVersion[] }> {
+    return this.client.raw("GET", `/api/functions/${encodeURIComponent(id)}/versions`);
   }
 
-  public rollback(id: string, body: { version: number }) {
-    return this.client.post("/api/functions/{id}/rollback", {
-      pathParams: { id },
-      body,
-    });
+  public rollback(id: string, body: { version: number }): Promise<QuiltFunction> {
+    return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/rollback`, { body });
   }
 
-  public pool(id: string) {
-    return this.client.get("/api/functions/{id}/pool", {
-      pathParams: { id },
-    });
+  public pool(id: string): Promise<QuiltFunctionPoolStatus> {
+    return this.client.raw("GET", `/api/functions/${encodeURIComponent(id)}/pool`);
   }
 
-  public poolStats() {
-    return this.client.get("/api/functions/pool/stats");
+  public poolStats(): Promise<QuiltGlobalFunctionPoolStats> {
+    return this.client.raw("GET", "/api/functions/pool/stats");
   }
 }
