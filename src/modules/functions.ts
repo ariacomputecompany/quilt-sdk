@@ -3,6 +3,7 @@ import type { QuiltClient } from "../core/client";
 export interface QuiltFunction {
   id: string;
   tenant_id: string;
+  cluster_id: string | null;
   owner_node_id: string;
   name: string;
   description: string | null;
