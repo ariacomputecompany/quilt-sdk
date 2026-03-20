@@ -34,7 +34,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
         type: "object",
         properties: {
           name: { type: "string" },
-          image: { type: "string", enum: ["prod", "prod-gui"] },
+          image: { type: "string" },
+          oci: { type: "boolean" },
           command: { type: "array", items: { type: "string" } },
         },
         additionalProperties: true,

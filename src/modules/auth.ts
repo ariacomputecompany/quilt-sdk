@@ -15,10 +15,6 @@ export class AuthModule {
     return this.client.post("/api/auth/login", { body });
   }
 
-  public refresh(body: { refresh_token: string }) {
-    return this.client.post("/api/auth/refresh", { body });
-  }
-
   public me() {
     return this.client.get("/api/auth/me");
   }

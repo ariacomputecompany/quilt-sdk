@@ -21,6 +21,12 @@ export class VolumesModule {
     });
   }
 
+  public inspect(name: string) {
+    return this.client.raw<Record<string, unknown>>("get", "/api/volumes/{name}/inspect", {
+      pathParams: { name },
+    });
+  }
+
   public delete(name: string, execution: "sync" | "async" = "sync") {
     return this.client.delete("/api/volumes/{name}", {
       pathParams: { name },
@@ -32,6 +38,19 @@ export class VolumesModule {
     return this.client.get("/api/volumes/{name}/ls", {
       pathParams: { name },
       query,
+    });
+  }
+
+  public rename(name: string, newName: string) {
+    return this.client.raw<Record<string, unknown>>("post", "/api/volumes/{name}/rename", {
+      pathParams: { name },
+      body: { new_name: newName },
+    });
+  }
+
+  public deleteFile(name: string, path: string) {
+    return this.client.raw<Record<string, unknown>>("delete", "/api/volumes/{name}/files/{path}", {
+      pathParams: { name, path },
     });
   }
 }

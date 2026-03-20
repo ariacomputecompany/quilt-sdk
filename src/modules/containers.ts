@@ -10,13 +10,15 @@ export class ContainersModule {
   public create(
     body: {
       name?: string | null;
-      image?: "prod" | "prod-gui" | null;
+      image?: string | null;
+      oci?: boolean | null;
       command?: string[] | null;
       environment?: Record<string, string> | null;
       memory_limit_mb?: number | null;
       cpu_limit_percent?: number | null;
       volumes?: string[] | null;
       working_directory?: string | null;
+      strict?: boolean | null;
     },
     execution: "sync" | "async" = "sync",
   ) {
@@ -30,13 +32,15 @@ export class ContainersModule {
     body: {
       items: Array<{
         name?: string | null;
-        image?: "prod" | "prod-gui" | null;
+        image?: string | null;
+        oci?: boolean | null;
         command?: string[] | null;
         environment?: Record<string, string> | null;
         memory_limit_mb?: number | null;
         cpu_limit_percent?: number | null;
         volumes?: string[] | null;
         working_directory?: string | null;
+        strict?: boolean | null;
       }>;
     },
     execution: "sync" | "async" = "sync",
@@ -47,34 +51,41 @@ export class ContainersModule {
     });
   }
 
-  public get(id: string) {
-    return this.client.get("/api/containers/{id}", { pathParams: { id } });
+  public get(identifier: string) {
+    return this.client.get("/api/containers/{id}", { pathParams: { id: identifier } });
   }
 
-  public remove(id: string, execution: "sync" | "async" = "sync") {
+  public remove(identifier: string, execution: "sync" | "async" = "sync") {
     return this.client.delete("/api/containers/{id}", {
-      pathParams: { id },
+      pathParams: { id: identifier },
       query: { execution },
     });
   }
 
-  public start(id: string) {
-    return this.client.post("/api/containers/{id}/start", { pathParams: { id } });
+  public start(identifier: string) {
+    return this.client.post("/api/containers/{id}/start", { pathParams: { id: identifier } });
   }
 
-  public stop(id: string, execution: "sync" | "async" = "sync") {
+  public stop(identifier: string, execution: "sync" | "async" = "sync") {
     return this.client.post("/api/containers/{id}/stop", {
-      pathParams: { id },
+      pathParams: { id: identifier },
       query: { execution },
     });
   }
 
-  public kill(id: string) {
-    return this.client.post("/api/containers/{id}/kill", { pathParams: { id } });
+  public resume(identifier: string, execution: "sync" | "async" = "async") {
+    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/resume", {
+      pathParams: { id: identifier },
+      query: { execution },
+    });
+  }
+
+  public kill(identifier: string) {
+    return this.client.post("/api/containers/{id}/kill", { pathParams: { id: identifier } });
   }
 
   public exec(
-    id: string,
+    identifier: string,
     body: {
       command:
         | string
@@ -89,33 +100,58 @@ export class ContainersModule {
     },
   ) {
     return this.client.post("/api/containers/{id}/exec", {
-      pathParams: { id },
+      pathParams: { id: identifier },
       body,
     });
   }
 
-  public logs(id: string, query?: { limit?: number }) {
+  public logs(identifier: string, query?: { limit?: number }) {
     return this.client.get("/api/containers/{id}/logs", {
-      pathParams: { id },
+      pathParams: { id: identifier },
       query,
     });
   }
 
-  public metrics(id: string) {
+  public metrics(identifier: string) {
     return this.client.get("/api/containers/{id}/metrics", {
-      pathParams: { id },
+      pathParams: { id: identifier },
     });
   }
 
-  public networkDiagnostics(id: string) {
+  public ready(identifier: string) {
+    return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/ready", {
+      pathParams: { id: identifier },
+    });
+  }
+
+  public networkDiagnostics(identifier: string) {
     return this.client.get("/api/containers/{id}/network/diagnostics", {
-      pathParams: { id },
+      pathParams: { id: identifier },
     });
   }
 
-  public egress(id: string) {
+  public networkGet(identifier: string) {
+    return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/network", {
+      pathParams: { id: identifier },
+    });
+  }
+
+  public networkSet(identifier: string, body: { ip_address?: string; gateway?: string }) {
+    return this.client.raw<Record<string, unknown>>("put", "/api/containers/{id}/network", {
+      pathParams: { id: identifier },
+      body,
+    });
+  }
+
+  public networkSetup(identifier: string) {
+    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/network/setup", {
+      pathParams: { id: identifier },
+    });
+  }
+
+  public egress(identifier: string) {
     return this.client.get("/api/containers/{id}/egress", {
-      pathParams: { id },
+      pathParams: { id: identifier },
     });
   }
 
@@ -125,17 +161,43 @@ export class ContainersModule {
     });
   }
 
-  public injectRoute(id: string, body: { destination: string; gateway: string }) {
+  public injectRoute(identifier: string, body: { destination: string }) {
     return this.client.post("/api/containers/{id}/routes", {
-      pathParams: { id },
+      pathParams: { id: identifier },
       body,
     });
   }
 
-  public removeRoute(id: string, query: { destination: string; gateway?: string }) {
-    return this.client.delete("/api/containers/{id}/routes", {
-      pathParams: { id },
-      query,
+  public removeRoute(identifier: string, body: { destination: string }) {
+    return this.client.raw<Record<string, unknown>>("delete", "/api/containers/{id}/routes", {
+      pathParams: { id: identifier },
+      body,
+    });
+  }
+
+  public guiUrl(identifier: string) {
+    return this.client.raw<{ gui_url: string }>("get", "/api/containers/{id}/gui-url", {
+      pathParams: { id: identifier },
+    });
+  }
+
+  public snapshot(identifier: string, body?: Record<string, unknown>) {
+    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/snapshot", {
+      pathParams: { id: identifier },
+      body: body ?? {},
+    });
+  }
+
+  public cleanupTasks(identifier: string) {
+    return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/cleanup/tasks", {
+      pathParams: { id: identifier },
+    });
+  }
+
+  public cleanupForce(identifier: string, removeVolumes = false) {
+    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/cleanup/force", {
+      pathParams: { id: identifier },
+      body: { confirm: true, remove_volumes: removeVolumes },
     });
   }
 }
