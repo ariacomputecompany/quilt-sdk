@@ -3,7 +3,7 @@ import { buildUrl } from "../core/url";
 
 export interface TerminalAttachOptions {
   session_id?: string;
-  container_id?: string;
+  container_identifier?: string;
   cols?: number;
   rows?: number;
   shell?: string;
@@ -30,12 +30,14 @@ export class TerminalRealtimeClient {
       throw new Error("WebSocket terminal attach requires token or API key auth");
     }
 
+    const { container_identifier, ...rest } = options;
     const url = buildUrl({
       baseUrl: httpToWsBaseUrl(this.client.getBaseUrl()),
       path: "/ws/terminal/attach",
       query: {
         token,
-        ...options,
+        ...rest,
+        ...(container_identifier !== undefined ? { container_id: container_identifier } : {}),
       },
     });
 

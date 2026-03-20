@@ -9,12 +9,18 @@ export class TerminalModule {
 
   public createSession(body: {
     target: "master" | "container";
-    container_id?: string;
+    container_identifier?: string;
     shell?: string;
     cols?: number;
     rows?: number;
   }) {
-    return this.client.post("/api/terminal/sessions", { body });
+    const { container_identifier, ...rest } = body;
+    return this.client.post("/api/terminal/sessions", {
+      body: {
+        ...rest,
+        ...(container_identifier !== undefined ? { container_id: container_identifier } : {}),
+      },
+    });
   }
 
   public getSession(sessionId: string) {

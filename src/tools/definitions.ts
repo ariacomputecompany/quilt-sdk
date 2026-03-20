@@ -46,11 +46,11 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
     type: "function",
     function: {
       name: "quilt_containers_get",
-      description: "Get a container by id",
+      description: "Get a container by identifier",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -62,8 +62,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Start a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -75,8 +75,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Stop a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" }, execution: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" }, execution: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -88,8 +88,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Force kill a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -101,8 +101,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Remove a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" }, execution: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" }, execution: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -115,12 +115,12 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       parameters: {
         type: "object",
         properties: {
-          id: { type: "string" },
+          identifier: { type: "string" },
           command: {
             oneOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
           },
         },
-        required: ["id", "command"],
+        required: ["identifier", "command"],
         additionalProperties: true,
       },
     },
@@ -132,8 +132,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Get logs for a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" }, limit: { type: "number" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" }, limit: { type: "number" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -145,8 +145,8 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       description: "Get metrics for a container",
       parameters: {
         type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        properties: { identifier: { type: "string" } },
+        required: ["identifier"],
         additionalProperties: false,
       },
     },
@@ -275,7 +275,7 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
         type: "object",
         properties: {
           target: { type: "string", enum: ["master", "container"] },
-          container_id: { type: "string" },
+          container_identifier: { type: "string" },
           shell: { type: "string" },
           cols: { type: "number" },
           rows: { type: "number" },
@@ -356,13 +356,13 @@ export const QUILT_TOOLS: ToolFunctionDefinition[] = [
       parameters: {
         type: "object",
         properties: {
-          container_id: { type: "string" },
+          container_identifier: { type: "string" },
           from_seq: { type: "number" },
           to_seq: { type: "number" },
           state: { type: "string" },
           limit: { type: "number" },
         },
-        required: ["container_id"],
+        required: ["container_identifier"],
         additionalProperties: false,
       },
     },

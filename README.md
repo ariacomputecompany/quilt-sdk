@@ -53,7 +53,7 @@ quilt.events.on(source, "container_update", (event) => {
 ### WebSocket Terminal
 
 ```ts
-const ws = quilt.terminalRealtime.connect({ container_id: "ctr_123", cols: 120, rows: 30 });
+const ws = quilt.terminalRealtime.connect({ container_identifier: "ctr_123", cols: 120, rows: 30 });
 ws.addEventListener("message", (msg) => {
   if (typeof msg.data === "string") {
     const parsed = quilt.terminalRealtime.parseServerMessage(msg.data);

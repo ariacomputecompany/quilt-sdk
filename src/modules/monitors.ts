@@ -7,9 +7,9 @@ export class MonitorsModule {
     return this.client.get("/api/monitors");
   }
 
-  public byContainer(containerId: string) {
+  public byContainer(containerIdentifier: string) {
     return this.client.get("/api/monitors/{container_id}", {
-      pathParams: { container_id: containerId },
+      pathParams: { container_id: containerIdentifier },
     });
   }
 }

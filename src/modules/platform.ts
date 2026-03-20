@@ -11,29 +11,29 @@ export interface OperationStatus {
 export class PlatformModule {
   public constructor(private readonly client: QuiltClient) {}
 
-  public getContainerEnv(containerId: string) {
+  public getContainerEnv(containerIdentifier: string) {
     return this.client.raw<{ environment: Record<string, string> }>(
       "get",
       "/api/containers/{id}/env",
-      { pathParams: { id: containerId } },
+      { pathParams: { id: containerIdentifier } },
     );
   }
 
-  public patchContainerEnv(containerId: string, environment: Record<string, string>) {
+  public patchContainerEnv(containerIdentifier: string, environment: Record<string, string>) {
     return this.client.raw<{ success: boolean }>("patch", "/api/containers/{id}/env", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
       body: { environment },
     });
   }
 
-  public replaceContainerEnv(containerId: string, environment: Record<string, string>) {
+  public replaceContainerEnv(containerIdentifier: string, environment: Record<string, string>) {
     return this.client.raw<{ success: boolean }>("put", "/api/containers/{id}/env", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
       body: { environment },
     });
   }
 
-  public renameContainer(containerId: string, name: string) {
+  public renameContainer(containerIdentifier: string, name: string) {
     return this.client.raw<{
       success: boolean;
       container_id: string;
@@ -41,42 +41,42 @@ export class PlatformModule {
       new_name?: string;
       dns_updated?: boolean;
     }>("post", "/api/containers/{id}/rename", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
       body: { name },
     });
   }
 
   public uploadContainerArchive(
-    containerId: string,
+    containerIdentifier: string,
     body: { content: string; strip_components?: number; path?: string },
   ) {
     return this.client.raw<{ success: boolean }>("post", "/api/containers/{id}/archive", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
       body,
     });
   }
 
-  public listContainerJobs(containerId: string) {
+  public listContainerJobs(containerIdentifier: string) {
     return this.client.raw<{ jobs: unknown[] }>("get", "/api/containers/{id}/jobs", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
     });
   }
 
-  public getContainerJob(containerId: string, jobId: string, includeOutput = true) {
+  public getContainerJob(containerIdentifier: string, jobId: string, includeOutput = true) {
     return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/jobs/{job_id}", {
-      pathParams: { id: containerId, job_id: jobId },
+      pathParams: { id: containerIdentifier, job_id: jobId },
       query: { include_output: includeOutput },
     });
   }
 
-  public checkContainerReady(containerId: string) {
+  public checkContainerReady(containerIdentifier: string) {
     return this.client.raw<{ ready: boolean }>("get", "/api/containers/{id}/ready", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
     });
   }
 
   public forkContainer(
-    containerId: string,
+    containerIdentifier: string,
     body: { name?: string } = {},
     execution: "sync" | "async" = "async",
   ) {
@@ -84,7 +84,7 @@ export class PlatformModule {
       "post",
       "/api/containers/{id}/fork",
       {
-        pathParams: { id: containerId },
+        pathParams: { id: containerIdentifier },
         query: { execution },
         body,
       },
@@ -154,9 +154,9 @@ export class PlatformModule {
     return this.client.raw<Record<string, unknown>>("get", "/api/monitors/profile");
   }
 
-  public getGuiUrl(containerId: string) {
+  public getGuiUrl(containerIdentifier: string) {
     return this.client.raw<{ gui_url: string }>("get", "/api/containers/{id}/gui-url", {
-      pathParams: { id: containerId },
+      pathParams: { id: containerIdentifier },
     });
   }
 
@@ -248,19 +248,20 @@ export class PlatformModule {
   }
 
   public iccMessages(query: {
-    container_id: string;
+    container_identifier: string;
     from_seq?: number;
     to_seq?: number;
     state?: string;
     limit?: number;
   }) {
+    const { container_identifier, ...rest } = query;
     return this.client.raw<Record<string, unknown>>("get", "/api/icc/messages", {
-      query,
+      query: { ...rest, container_id: container_identifier },
     });
   }
 
   public iccInbox(
-    containerId: string,
+    containerIdentifier: string,
     query?: {
       from_seq?: number;
       to_seq?: number;
@@ -269,7 +270,7 @@ export class PlatformModule {
     },
   ) {
     return this.client.raw<Record<string, unknown>>("get", "/api/icc/inbox/{container_id}", {
-      pathParams: { container_id: containerId },
+      pathParams: { container_id: containerIdentifier },
       query,
     });
   }
@@ -281,14 +282,15 @@ export class PlatformModule {
   }
 
   public iccReplay(body: {
-    container_id: string;
+    container_identifier: string;
     from_seq?: number;
     to_seq?: number;
     state?: string;
     limit?: number;
   }) {
+    const { container_identifier, ...rest } = body;
     return this.client.raw<Record<string, unknown>>("post", "/api/icc/replay", {
-      body,
+      body: { ...rest, container_id: container_identifier },
     });
   }
 
