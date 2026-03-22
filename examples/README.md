@@ -36,6 +36,7 @@ Run examples from the repo root:
 
 ```bash
 bun run example:containers
+bun run example:images
 bun run example:sdk
 bun run example:clusters
 bun run example:terminal
@@ -93,6 +94,44 @@ Primary SDK surfaces:
 - `client.platform`
 - `client.volumes`
 - `client.functions`
+
+### `docker-and-oci-images.ts`
+
+Use this for Docker-compatible registry image flows.
+
+It covers:
+
+- OCI image pull from a Docker-compatible registry
+- OCI image list, inspect, and history
+- container create from a pulled OCI image with `oci: true`
+- exec inside the created container to confirm the pulled image is runnable
+
+Primary SDK surfaces:
+
+- `client.platform`
+- `client.containers`
+
+Registry pull snippet:
+
+```ts
+const pulled = await client.platform.ociPull({
+  reference: "docker.io/library/alpine:3.20",
+});
+```
+
+Create from the pulled image:
+
+```ts
+const accepted = await client.containers.create(
+  {
+    name: "oci-demo",
+    image: "docker.io/library/alpine:3.20",
+    oci: true,
+    command: ["sleep", "60"],
+  },
+  "async",
+);
+```
 
 ### `sdk-runtime-and-functions.ts`
 
@@ -204,6 +243,7 @@ Use the typed module surfaces first.
 - prefer `client.functions.invoke(...)` over a custom fetch wrapper
 - prefer `client.elasticity.*` for control-plane elasticity operations
 - prefer `client.awaitOperation(...)` and job polling over ad hoc sleeps
+- use OCI image pull plus `oci: true` container create for Docker-compatible registry images
 
 Use `client.raw(...)` only when one of these is true:
 

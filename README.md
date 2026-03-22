@@ -74,6 +74,40 @@ Primary SDK surfaces:
 - `client.events` for SSE streams
 - `client.raw(...)` for authenticated access to backend routes that are intentionally still exposed as raw contract calls
 
+## Docker-Compatible Images
+
+Quilt supports Docker-compatible registry image ingress through the OCI image routes and normal container create.
+
+That means:
+
+- pull an image from Docker Hub or another OCI-compatible registry
+- inspect or list the stored image metadata
+- create a container from that pulled image with `oci: true`
+
+This is image compatibility, not Docker Engine API compatibility.
+
+Registry pull:
+
+```ts
+const pulled = await client.platform.ociPull({
+  reference: "docker.io/library/alpine:3.20",
+});
+```
+
+Create from the pulled image:
+
+```ts
+const accepted = await client.containers.create(
+  {
+    name: "oci-demo",
+    image: "docker.io/library/alpine:3.20",
+    oci: true,
+    command: ["sleep", "60"],
+  },
+  "async",
+);
+```
+
 ## Public Types
 
 The SDK ships declarations automatically through the package export.
@@ -139,6 +173,7 @@ The repository ships a production-validated example set in [`examples/`](./examp
 Example files:
 
 - `examples/containers-volumes-and-network.ts`
+- `examples/docker-and-oci-images.ts`
 - `examples/sdk-runtime-and-functions.ts`
 - `examples/clusters-nodes-workloads-and-k8s.ts`
 - `examples/terminal-and-icc.ts`
@@ -151,6 +186,7 @@ Run them from the repo root:
 
 ```bash
 bun run example:containers
+bun run example:images
 bun run example:sdk
 bun run example:clusters
 bun run example:terminal
