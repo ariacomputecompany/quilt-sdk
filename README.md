@@ -76,16 +76,12 @@ Primary SDK surfaces:
 
 ## Public Types
 
-The SDK ships declarations automatically.
+The SDK ships declarations automatically through the package export.
 
 Use the client-owned type surface when you need explicit types:
 
 ```ts
 import { QuiltClient } from "quilt-sdk";
-
-const client = QuiltClient.connect({
-  apiKey: process.env.QUILT_API_KEY,
-});
 
 const options: QuiltClient.Options = {
   baseUrl: "https://backend.quilt.sh",
@@ -138,7 +134,7 @@ ws.addEventListener("message", (msg) => {
 
 ## Examples
 
-The repo ships production-validated examples in [examples/README.md](/home/ubuntu/quilt-sdk/examples/README.md).
+The repository ships a production-validated example set in [`examples/`](./examples).
 
 Example files:
 
@@ -148,6 +144,8 @@ Example files:
 - `examples/terminal-and-icc.ts`
 - `examples/elasticity-control.ts`
 - `examples/lifecycle-and-failures.ts`
+
+The example guide is in [`examples/README.md`](./examples/README.md).
 
 Run them from the repo root:
 
@@ -184,6 +182,28 @@ bun run test
 bun run build
 bun run examples:all
 ```
+
+`prepublishOnly` runs:
+
+```bash
+bun run clean
+bun run lint
+bun run typecheck
+bun run examples:typecheck
+bun run test
+bun run build
+```
+
+## Package Contents
+
+The published npm package includes:
+
+- compiled runtime in `dist/`
+- generated `.d.ts` declarations
+- `README.md`
+- `LICENSE`
+
+The repository also includes the example app and validation setup used to verify the SDK against production.
 
 ## License
 

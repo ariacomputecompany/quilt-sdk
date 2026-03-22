@@ -34,7 +34,7 @@
     "example:terminal": "node --env-file=.env --import tsx examples/terminal-and-icc.ts",
     "example:elasticity": "node --env-file=.env --import tsx examples/elasticity-control.ts",
     "example:lifecycle": "node --env-file=.env --import tsx examples/lifecycle-and-failures.ts",
-    "prepublishOnly": "bun run clean && bun run lint && bun run typecheck && bun run test && bun run build"
+    "prepublishOnly": "bun run clean && bun run lint && bun run typecheck && bun run examples:typecheck && bun run test && bun run build"
   },
   "keywords": ["quilt", "sdk", "api", "typescript", "bun"],
   "license": "MIT",
