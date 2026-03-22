@@ -1,5 +1,6 @@
 import type { QuiltClient } from "../core/client";
 import { buildUrl } from "../core/url";
+import type { EventSourceLike } from "../types/common";
 
 export type QuiltEventType =
   | "container_update"
@@ -25,7 +26,7 @@ export interface QuiltSseEvent<T = unknown> {
 export class EventsClient {
   public constructor(private readonly client: QuiltClient) {}
 
-  public openEventSource(): EventSource {
+  public openEventSource(): EventSourceLike {
     const token = this.client.getQueryToken();
     if (token === null) {
       throw new Error("SSE requires token or API key auth");
@@ -37,16 +38,23 @@ export class EventsClient {
       query: { token },
     });
 
-    return new EventSource(url.toString());
+    const EventSourceImpl =
+      this.client.getEventSourceImpl() ??
+      (typeof globalThis.EventSource === "function" ? globalThis.EventSource : null);
+    if (EventSourceImpl === null) {
+      throw new Error("No EventSource implementation configured");
+    }
+
+    return new EventSourceImpl(url.toString());
   }
 
   public on(
-    eventSource: EventSource,
+    eventSource: EventSourceLike,
     eventType: QuiltEventType,
     handler: (event: QuiltSseEvent) => void,
   ): void {
-    eventSource.addEventListener(eventType, (event: MessageEvent) => {
-      const parsed = safeParseJson(event.data);
+    eventSource.addEventListener(eventType, (event) => {
+      const parsed = safeParseJson((event as MessageEvent<string>).data);
       handler({
         type: eventType,
         data: parsed,

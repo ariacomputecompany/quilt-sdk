@@ -15,7 +15,12 @@ import { TerminalModule } from "../modules/terminal";
 import { VolumesModule } from "../modules/volumes";
 import { EventsClient } from "../realtime/events";
 import { TerminalRealtimeClient } from "../realtime/terminal";
-import type { QuiltAuth, QuiltClientOptions } from "../types/common";
+import type {
+  EventSourceConstructorLike,
+  QuiltAuth,
+  QuiltClientOptions,
+  WebSocketConstructorLike,
+} from "../types/common";
 import type {
   HttpMethod,
   StablePathForMethod,
@@ -29,6 +34,8 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class QuiltClient {
   private readonly transport: QuiltTransport;
+  private readonly eventSourceImpl: EventSourceConstructorLike | null;
+  private readonly webSocketImpl: WebSocketConstructorLike | null;
 
   public readonly auth: AuthModule;
   public readonly apiKeys: ApiKeysModule;
@@ -58,6 +65,8 @@ export class QuiltClient {
       defaultHeaders: options.defaultHeaders ?? {},
       fetchImpl: options.fetch ?? globalThis.fetch,
     });
+    this.eventSourceImpl = options.eventSource ?? null;
+    this.webSocketImpl = options.webSocket ?? null;
 
     this.auth = new AuthModule(this);
     this.apiKeys = new ApiKeysModule(this);
@@ -92,6 +101,14 @@ export class QuiltClient {
 
   public getBaseUrl(): string {
     return this.transport.getBaseUrl();
+  }
+
+  public getEventSourceImpl(): EventSourceConstructorLike | null {
+    return this.eventSourceImpl;
+  }
+
+  public getWebSocketImpl(): WebSocketConstructorLike | null {
+    return this.webSocketImpl;
   }
 
   public request<M extends HttpMethod, P extends StablePathForMethod<M>>(

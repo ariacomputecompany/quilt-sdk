@@ -1,5 +1,40 @@
 import type { QuiltClient } from "../core/client";
 
+export interface CreateFunctionRequest {
+  name: string;
+  handler: string;
+  runtime: string;
+  description?: string | null;
+  environment?: Record<string, string>;
+  memory_limit_mb?: number;
+  cpu_limit_percent?: number;
+  timeout_seconds?: number;
+  min_instances?: number;
+  max_instances?: number;
+  cleanup_on_exit?: boolean;
+  working_directory?: string | null;
+}
+
+export interface UpdateFunctionRequest {
+  name?: string;
+  handler?: string;
+  runtime?: string;
+  description?: string | null;
+  environment?: Record<string, string>;
+  memory_limit_mb?: number;
+  cpu_limit_percent?: number;
+  timeout_seconds?: number;
+  min_instances?: number;
+  max_instances?: number;
+  cleanup_on_exit?: boolean;
+  working_directory?: string | null;
+}
+
+export interface InvokeFunctionRequest {
+  payload?: string;
+  timeout_seconds?: number;
+}
+
 export interface QuiltFunction {
   id: string;
   tenant_id: string;
@@ -79,7 +114,7 @@ export class FunctionsModule {
     return this.client.raw("GET", "/api/functions");
   }
 
-  public create(body: Record<string, unknown>): Promise<{
+  public create(body: CreateFunctionRequest): Promise<{
     function_id: string;
     name: string;
     state: string;
@@ -92,7 +127,7 @@ export class FunctionsModule {
     return this.client.raw("GET", `/api/functions/${encodeURIComponent(id)}`);
   }
 
-  public update(id: string, body: Record<string, unknown>): Promise<QuiltFunction> {
+  public update(id: string, body: UpdateFunctionRequest): Promise<QuiltFunction> {
     return this.client.raw("PUT", `/api/functions/${encodeURIComponent(id)}`, { body });
   }
 
@@ -116,14 +151,11 @@ export class FunctionsModule {
     return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/resume`);
   }
 
-  public invoke(id: string, body: Record<string, unknown> = {}): Promise<QuiltInvocation> {
+  public invoke(id: string, body: InvokeFunctionRequest = {}): Promise<QuiltInvocation> {
     return this.client.raw("POST", `/api/functions/${encodeURIComponent(id)}/invoke`, { body });
   }
 
-  public invokeByName(
-    name: string,
-    body: Record<string, unknown> = {},
-  ): Promise<QuiltInvocation> {
+  public invokeByName(name: string, body: InvokeFunctionRequest = {}): Promise<QuiltInvocation> {
     return this.client.raw("POST", `/api/functions/invoke/${encodeURIComponent(name)}`, { body });
   }
 

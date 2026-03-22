@@ -23,11 +23,48 @@ export interface ElasticityControlContract {
   paths: ElasticityControlContractPaths;
 }
 
+export interface ElasticityNodeStatus {
+  status: string;
+  node_id?: string;
+  tenant_id?: string;
+}
+
+export interface ElasticityContainerResizeResponse {
+  container_id: string;
+  memory_limit_mb?: number;
+  cpu_limit_percent?: number;
+}
+
+export interface ElasticityFunctionPoolTargetResponse {
+  function_id: string;
+  min_instances?: number;
+  max_instances?: number;
+}
+
+export interface ElasticityControlOperation {
+  operation_id: string;
+  operation_type: string;
+  action_id?: string;
+  status?: string;
+}
+
+export interface ElasticityWorkloadFunctionBinding {
+  workload_id?: string;
+  current_function_id?: string | null;
+  next_function_id?: string | null;
+}
+
+export interface ElasticityWorkloadPlacementPreference {
+  workload_id?: string;
+  node_group?: string | null;
+  anti_affinity?: boolean | null;
+}
+
 export class ElasticityModule {
   public constructor(private readonly client: QuiltClient) {}
 
   public nodeStatus(headers?: ElasticityControlHeaders) {
-    return this.client.raw<Record<string, unknown>>("get", "/api/elasticity/node/status", {
+    return this.client.raw<ElasticityNodeStatus>("get", "/api/elasticity/node/status", {
       headers,
     });
   }
@@ -37,11 +74,15 @@ export class ElasticityModule {
     body: { memory_limit_mb?: number; cpu_limit_percent?: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>("post", "/api/elasticity/containers/{id}/resize", {
-      pathParams: { id: containerId },
-      headers,
-      body,
-    });
+    return this.client.raw<ElasticityContainerResizeResponse>(
+      "post",
+      "/api/elasticity/containers/{id}/resize",
+      {
+        pathParams: { id: containerId },
+        headers,
+        body,
+      },
+    );
   }
 
   public setFunctionPoolTarget(
@@ -49,11 +90,15 @@ export class ElasticityModule {
     body: { min_instances?: number; max_instances?: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>("post", "/api/elasticity/functions/{id}/pool-target", {
-      pathParams: { id: functionId },
-      headers,
-      body,
-    });
+    return this.client.raw<ElasticityFunctionPoolTargetResponse>(
+      "post",
+      "/api/elasticity/functions/{id}/pool-target",
+      {
+        pathParams: { id: functionId },
+        headers,
+        body,
+      },
+    );
   }
 
   public controlResizeContainer(
@@ -61,7 +106,7 @@ export class ElasticityModule {
     body: { memory_limit_mb?: number; cpu_limit_percent?: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "post",
       "/api/elasticity/control/containers/{id}/resize",
       {
@@ -73,7 +118,7 @@ export class ElasticityModule {
   }
 
   public controlGetOperation(operationId: string, headers?: ElasticityControlHeaders) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "get",
       "/api/elasticity/control/operations/{id}",
       {
@@ -84,7 +129,7 @@ export class ElasticityModule {
   }
 
   public controlListActionOperations(actionId: string, headers?: ElasticityControlHeaders) {
-    return this.client.raw<Array<Record<string, unknown>>>(
+    return this.client.raw<ElasticityControlOperation[]>(
       "get",
       "/api/elasticity/control/actions/{id}/operations",
       {
@@ -99,7 +144,7 @@ export class ElasticityModule {
     body: { min_instances?: number; max_instances?: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "post",
       "/api/elasticity/control/functions/{id}/pool-target",
       {
@@ -115,7 +160,7 @@ export class ElasticityModule {
     body: { function_id: string },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityWorkloadFunctionBinding>(
       "put",
       "/api/elasticity/control/workloads/{id}/function-binding",
       {
@@ -126,11 +171,8 @@ export class ElasticityModule {
     );
   }
 
-  public controlGetWorkloadFunctionBinding(
-    workloadId: string,
-    headers?: ElasticityControlHeaders,
-  ) {
-    return this.client.raw<Record<string, unknown>>(
+  public controlGetWorkloadFunctionBinding(workloadId: string, headers?: ElasticityControlHeaders) {
+    return this.client.raw<ElasticityWorkloadFunctionBinding>(
       "get",
       "/api/elasticity/control/workloads/{id}/function-binding",
       {
@@ -145,7 +187,7 @@ export class ElasticityModule {
     body: { next_function_id: string; cutover_at?: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityWorkloadFunctionBinding>(
       "post",
       "/api/elasticity/control/workloads/{id}/function-binding/rotate",
       {
@@ -161,7 +203,7 @@ export class ElasticityModule {
     body: { node_group?: string | null; anti_affinity?: boolean | null },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "put",
       "/api/elasticity/control/workloads/{id}/placement-preference",
       {
@@ -176,7 +218,7 @@ export class ElasticityModule {
     workloadId: string,
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityWorkloadPlacementPreference>(
       "get",
       "/api/elasticity/control/workloads/{id}/placement-preference",
       {
@@ -191,7 +233,7 @@ export class ElasticityModule {
     body: { delta_units: number },
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "post",
       "/api/elasticity/control/node-groups/{id}/scale",
       {
@@ -207,7 +249,7 @@ export class ElasticityModule {
     body: { reason?: string | null } = {},
     headers?: ElasticityControlHeaders,
   ) {
-    return this.client.raw<Record<string, unknown>>(
+    return this.client.raw<ElasticityControlOperation>(
       "post",
       "/api/elasticity/control/actions/{id}/rollback",
       {
@@ -218,7 +260,9 @@ export class ElasticityModule {
     );
   }
 
-  public controlContract() {
-    return this.client.raw<ElasticityControlContract>("get", "/api/elasticity/control/contract");
+  public controlContract(headers?: ElasticityControlHeaders) {
+    return this.client.raw<ElasticityControlContract>("get", "/api/elasticity/control/contract", {
+      headers,
+    });
   }
 }

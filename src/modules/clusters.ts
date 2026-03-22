@@ -1,5 +1,13 @@
 import type { QuiltClient } from "../core/client";
 
+export interface CreateJoinTokenResponse {
+  token_id: string;
+  cluster_id: string;
+  join_token: string;
+  expires_at: number;
+  max_uses: number;
+}
+
 export class ClustersModule {
   public constructor(private readonly client: QuiltClient) {}
 
@@ -9,11 +17,31 @@ export class ClustersModule {
 
   public create(body: {
     name: string;
-    region?: string;
-    desired_nodes?: number;
-    labels?: Record<string, string>;
+    pod_cidr: string;
+    node_cidr_prefix: number;
   }) {
     return this.client.post("/api/clusters", { body });
+  }
+
+  public getCapabilities(clusterId: string) {
+    return this.client.raw<Record<string, unknown>>(
+      "get",
+      "/api/clusters/{cluster_id}/capabilities",
+      {
+        pathParams: { cluster_id: clusterId },
+      },
+    );
+  }
+
+  public createJoinToken(clusterId: string, body: { ttl_secs: number; max_uses: number }) {
+    return this.client.raw<CreateJoinTokenResponse>(
+      "post",
+      "/api/clusters/{cluster_id}/join-tokens",
+      {
+        pathParams: { cluster_id: clusterId },
+        body,
+      },
+    );
   }
 
   public get(clusterId: string) {
@@ -67,16 +95,15 @@ export class ClustersModule {
   public createWorkload(
     clusterId: string,
     body: {
+      replicas: number;
       name: string;
       image: string;
-      replicas?: number;
       command?: string[];
-      env?: Record<string, string>;
-      resources?: {
-        cpu_millis?: number;
-        memory_mb?: number;
-      };
+      environment?: Record<string, string>;
       labels?: Record<string, string>;
+      memory_limit_mb?: number;
+      cpu_limit_percent?: number;
+      strict?: boolean;
     },
   ) {
     return this.client.post("/api/clusters/{cluster_id}/workloads", {
@@ -96,14 +123,14 @@ export class ClustersModule {
     workloadId: string,
     body: {
       replicas?: number;
+      name?: string;
       image?: string;
       command?: string[];
-      env?: Record<string, string>;
-      resources?: {
-        cpu_millis?: number;
-        memory_mb?: number;
-      };
+      environment?: Record<string, string>;
       labels?: Record<string, string>;
+      memory_limit_mb?: number;
+      cpu_limit_percent?: number;
+      strict?: boolean;
     },
   ) {
     return this.client.put("/api/clusters/{cluster_id}/workloads/{workload_id}", {

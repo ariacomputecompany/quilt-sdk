@@ -1,5 +1,6 @@
 import type { QuiltClient } from "../core/client";
 import { buildUrl } from "../core/url";
+import type { WebSocketLike } from "../types/common";
 
 export interface TerminalAttachOptions {
   session_id?: string;
@@ -47,12 +48,18 @@ export class TerminalRealtimeClient {
   public connect(
     options: TerminalAttachOptions = {},
     protocols: string | string[] = ["terminal"],
-  ): WebSocket {
+  ): WebSocketLike {
     const url = this.buildAttachUrl(options);
-    return new WebSocket(url, protocols);
+    const WebSocketImpl =
+      this.client.getWebSocketImpl() ??
+      (typeof globalThis.WebSocket === "function" ? globalThis.WebSocket : null);
+    if (WebSocketImpl === null) {
+      throw new Error("No WebSocket implementation configured");
+    }
+    return new WebSocketImpl(url, protocols);
   }
 
-  public sendControlMessage(socket: WebSocket, message: TerminalClientMessage): void {
+  public sendControlMessage(socket: WebSocketLike, message: TerminalClientMessage): void {
     socket.send(JSON.stringify(message));
   }
 

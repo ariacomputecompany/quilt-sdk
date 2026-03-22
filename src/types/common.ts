@@ -12,6 +12,8 @@ export interface QuiltClientOptions {
   timeoutMs?: number;
   defaultHeaders?: Record<string, string>;
   fetch?: FetchFn;
+  eventSource?: EventSourceConstructorLike;
+  webSocket?: WebSocketConstructorLike;
 }
 
 export interface QuiltErrorBody {
@@ -39,3 +41,24 @@ export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | { [key: string]: JsonValue } | JsonValue[];
 
 export type FetchFn = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+
+export interface EventSourceLike {
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
+  close(): void;
+  onerror:
+    | ((this: EventSourceLike, ev: Event) => unknown)
+    | ((this: EventSource, ev: Event) => unknown)
+    | null;
+}
+
+export interface EventSourceConstructorLike {
+  new (url: string | URL, eventSourceInitDict?: EventSourceInit): EventSourceLike;
+}
+
+export interface WebSocketLike {
+  send(data: string | ArrayBufferLike | Blob | ArrayBufferView): void;
+}
+
+export interface WebSocketConstructorLike {
+  new (url: string | URL, protocols?: string | string[]): WebSocketLike;
+}
