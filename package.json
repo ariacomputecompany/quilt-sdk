@@ -22,10 +22,18 @@
     "generate:types": "node ./scripts/generate-contract-types.mjs",
     "build": "bun run generate:types && tsc -p tsconfig.build.json",
     "typecheck": "bun run generate:types && tsc -p tsconfig.json --noEmit",
+    "examples:typecheck": "tsc -p tsconfig.examples.json --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
+    "examples:all": "bun run example:containers && bun run example:sdk && bun run example:clusters && bun run example:terminal && bun run example:elasticity && bun run example:lifecycle",
+    "example:containers": "node --env-file=.env --import tsx examples/containers-volumes-and-network.ts",
+    "example:sdk": "node --env-file=.env --import tsx examples/sdk-runtime-and-functions.ts",
+    "example:clusters": "node --env-file=.env --import tsx examples/clusters-nodes-workloads-and-k8s.ts",
+    "example:terminal": "node --env-file=.env --import tsx examples/terminal-and-icc.ts",
+    "example:elasticity": "node --env-file=.env --import tsx examples/elasticity-control.ts",
+    "example:lifecycle": "node --env-file=.env --import tsx examples/lifecycle-and-failures.ts",
     "prepublishOnly": "bun run clean && bun run lint && bun run typecheck && bun run test && bun run build"
   },
   "keywords": ["quilt", "sdk", "api", "typescript", "bun"],
@@ -33,8 +41,13 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.1",
     "bun-types": "^1.3.0",
+    "eventsource": "^3.0.7",
     "openapi-typescript": "^7.6.1",
-    "typescript": "^5.8.3"
+    "protobufjs": "^8.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "ws": "^8.20.0"
   }
 }
