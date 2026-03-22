@@ -1,10 +1,39 @@
 import { AgentModule } from "../modules/agent";
+import type {
+  AgentAuthHeaders as AgentAuthHeadersType,
+  HeartbeatRequest as HeartbeatRequestType,
+  PlacementReportRequest as PlacementReportRequestType,
+  RegisterNodeRequest as RegisterNodeRequestType,
+  RegisterNodeResponse as RegisterNodeResponseType,
+} from "../modules/agent";
 import { ApiKeysModule } from "../modules/api-keys";
 import { AuthModule } from "../modules/auth";
 import { ClustersModule } from "../modules/clusters";
+import type { CreateJoinTokenResponse as CreateJoinTokenResponseType } from "../modules/clusters";
 import { ContainersModule } from "../modules/containers";
 import { ElasticityModule } from "../modules/elasticity";
+import type {
+  ElasticityContainerResizeResponse as ElasticityContainerResizeResponseType,
+  ElasticityControlContractPaths as ElasticityControlContractPathsType,
+  ElasticityControlContract as ElasticityControlContractType,
+  ElasticityControlHeaders as ElasticityControlHeadersType,
+  ElasticityControlOperation as ElasticityControlOperationType,
+  ElasticityFunctionPoolTargetResponse as ElasticityFunctionPoolTargetResponseType,
+  ElasticityNodeStatus as ElasticityNodeStatusType,
+  ElasticityWorkloadFunctionBinding as ElasticityWorkloadFunctionBindingType,
+  ElasticityWorkloadPlacementPreference as ElasticityWorkloadPlacementPreferenceType,
+} from "../modules/elasticity";
 import { FunctionsModule } from "../modules/functions";
+import type {
+  CreateFunctionRequest as CreateFunctionRequestType,
+  InvokeFunctionRequest as InvokeFunctionRequestType,
+  QuiltFunctionPoolStatus as QuiltFunctionPoolStatusType,
+  QuiltFunction as QuiltFunctionType,
+  QuiltFunctionVersion as QuiltFunctionVersionType,
+  QuiltGlobalFunctionPoolStats as QuiltGlobalFunctionPoolStatsType,
+  QuiltInvocation as QuiltInvocationType,
+  UpdateFunctionRequest as UpdateFunctionRequestType,
+} from "../modules/functions";
 import { MasterModule } from "../modules/master";
 import { MonitorsModule } from "../modules/monitors";
 import { NotificationsModule } from "../modules/notifications";
@@ -14,7 +43,16 @@ import { SystemModule } from "../modules/system";
 import { TerminalModule } from "../modules/terminal";
 import { VolumesModule } from "../modules/volumes";
 import { EventsClient } from "../realtime/events";
+import type {
+  QuiltEventType as QuiltEventTypeType,
+  QuiltSseEvent as QuiltSseEventType,
+} from "../realtime/events";
 import { TerminalRealtimeClient } from "../realtime/terminal";
+import type {
+  TerminalAttachOptions as TerminalAttachOptionsType,
+  TerminalClientMessage as TerminalClientMessageType,
+  TerminalServerMessage as TerminalServerMessageType,
+} from "../realtime/terminal";
 import type {
   EventSourceConstructorLike,
   QuiltAuth,
@@ -22,10 +60,19 @@ import type {
   WebSocketConstructorLike,
 } from "../types/common";
 import type {
+  HeaderParams as HeaderParamsType,
   HttpMethod,
+  HttpMethod as HttpMethodType,
+  JsonRequestBody as JsonRequestBodyType,
+  PathParams as PathParamsType,
+  QueryParams as QueryParamsType,
   StablePathForMethod,
+  StablePathForMethod as StablePathForMethodType,
+  StablePath as StablePathType,
   StableRequestOptions,
+  StableRequestOptions as StableRequestOptionsType,
   SuccessResponse,
+  SuccessResponse as SuccessResponseType,
 } from "../types/surface";
 import { QuiltTransport, type RawRequestOptions } from "./http";
 
@@ -190,6 +237,70 @@ export class QuiltClient {
 
       await sleep(intervalMs, options.signal);
     }
+  }
+}
+
+export declare namespace QuiltClient {
+  export type Options = QuiltClientOptions;
+  export type Auth = QuiltAuth;
+  export type Operation = OperationStatus;
+  export namespace Agent {
+    export type Headers = AgentAuthHeadersType;
+    export type HeartbeatRequest = HeartbeatRequestType;
+    export type PlacementReportRequest = PlacementReportRequestType;
+    export type RegisterNodeRequest = RegisterNodeRequestType;
+    export type RegisterNodeResponse = RegisterNodeResponseType;
+  }
+  export namespace Clusters {
+    export type CreateJoinTokenResponse = CreateJoinTokenResponseType;
+  }
+  export namespace Elasticity {
+    export type ControlContract = ElasticityControlContractType;
+    export type ControlContractPaths = ElasticityControlContractPathsType;
+    export type Headers = ElasticityControlHeadersType;
+    export type ContainerResizeResponse = ElasticityContainerResizeResponseType;
+    export type ControlOperation = ElasticityControlOperationType;
+    export type FunctionPoolTargetResponse = ElasticityFunctionPoolTargetResponseType;
+    export type NodeStatus = ElasticityNodeStatusType;
+    export type WorkloadFunctionBinding = ElasticityWorkloadFunctionBindingType;
+    export type WorkloadPlacementPreference = ElasticityWorkloadPlacementPreferenceType;
+  }
+  export namespace Functions {
+    export type CreateRequest = CreateFunctionRequestType;
+    export type InvokeRequest = InvokeFunctionRequestType;
+    export type Function = QuiltFunctionType;
+    export type PoolStatus = QuiltFunctionPoolStatusType;
+    export type Version = QuiltFunctionVersionType;
+    export type GlobalPoolStats = QuiltGlobalFunctionPoolStatsType;
+    export type Invocation = QuiltInvocationType;
+    export type UpdateRequest = UpdateFunctionRequestType;
+  }
+  export namespace Realtime {
+    export type EventType = QuiltEventTypeType;
+    export type SseEvent = QuiltSseEventType;
+    export type TerminalAttachOptions = TerminalAttachOptionsType;
+    export type TerminalClientMessage = TerminalClientMessageType;
+    export type TerminalServerMessage = TerminalServerMessageType;
+  }
+  export namespace Surface {
+    export type HttpMethod = HttpMethodType;
+    export type StablePath = StablePathType;
+    export type StablePathForMethod<M extends HttpMethod> = StablePathForMethodType<M>;
+    export type HeaderParams<P extends StablePath, M extends HttpMethod> = HeaderParamsType<P, M>;
+    export type JsonRequestBody<P extends StablePath, M extends HttpMethod> = JsonRequestBodyType<
+      P,
+      M
+    >;
+    export type PathParams<P extends StablePath, M extends HttpMethod> = PathParamsType<P, M>;
+    export type QueryParams<P extends StablePath, M extends HttpMethod> = QueryParamsType<P, M>;
+    export type StableRequestOptions<
+      P extends StablePath,
+      M extends HttpMethod,
+    > = StableRequestOptionsType<P, M>;
+    export type SuccessResponse<P extends StablePath, M extends HttpMethod> = SuccessResponseType<
+      P,
+      M
+    >;
   }
 }
 
