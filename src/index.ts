@@ -30,6 +30,11 @@ export type {
   QuiltInvocation,
   UpdateFunctionRequest,
 } from "./modules/functions";
+export type {
+  BuildContextUploadResponse,
+  OciBuildRequest,
+  OciPullRequest,
+} from "./modules/images";
 export type { QuiltClientOptions, QuiltAuth } from "./types/common";
 export type {
   HeaderParams,

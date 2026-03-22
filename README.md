@@ -10,10 +10,19 @@ Type-safe TypeScript SDK for Quilt production APIs.
 npm install quilt-sdk
 ```
 
+Local package install exposes the SDK CLI through `npx quilt` and `npx quilt-sdk`.
+
 or
 
 ```bash
 bun add quilt-sdk
+```
+
+Global install exposes the same CLI directly:
+
+```bash
+npm install -g quilt-sdk
+quilt health
 ```
 
 ## Requirements
@@ -65,6 +74,7 @@ Primary SDK surfaces:
 - `client.system` for health, info, and activity
 - `client.containers` for container lifecycle, exec, logs, metrics, snapshots, network, and GUI URLs
 - `client.platform` for cross-cutting routes such as operations, env maps, archives, jobs, ICC, OCI, and helper control flows
+- `client.images` for OCI pull, inspect, history, remove, build-context upload, and OCI image builds
 - `client.volumes` for volume lifecycle and file browsing
 - `client.clusters` for cluster, node, workload, placement, and join-token control-plane flows
 - `client.agent` for join-token and node-token authenticated agent calls
@@ -106,6 +116,41 @@ const accepted = await client.containers.create(
   },
   "async",
 );
+```
+
+Build a local Docker context into Quilt's OCI store:
+
+```ts
+import { readFile } from "node:fs/promises";
+import { QuiltClient } from "quilt-sdk";
+
+const client = QuiltClient.connect({
+  baseUrl: process.env.QUILT_BASE_URL ?? "https://backend.quilt.sh",
+  apiKey: process.env.QUILT_API_KEY,
+});
+
+const upload = await client.images.uploadBuildContext(
+  (await readFile("./context.tar.gz")).toString("base64"),
+);
+
+const accepted = await client.images.build({
+  context_id: upload.context_id,
+  image_reference: "docker.io/acme/my-app:latest",
+  dockerfile_path: "Dockerfile",
+});
+```
+
+## CLI
+
+The npm package now ships a CLI backed by the same SDK client.
+
+Examples:
+
+```bash
+npx quilt --api-key "$QUILT_API_KEY" health
+npx quilt --api-key "$QUILT_API_KEY" oci pull --reference docker.io/library/alpine:3.20
+npx quilt --api-key "$QUILT_API_KEY" build --context . --dockerfile Dockerfile --tag docker.io/acme/my-app:latest
+npx quilt --api-key "$QUILT_API_KEY" container create --image docker.io/acme/my-app:latest --oci --wait -- sleep 60
 ```
 
 ## Public Types

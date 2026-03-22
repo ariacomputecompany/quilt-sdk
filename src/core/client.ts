@@ -24,6 +24,7 @@ import type {
   ElasticityWorkloadPlacementPreference as ElasticityWorkloadPlacementPreferenceType,
 } from "../modules/elasticity";
 import { FunctionsModule } from "../modules/functions";
+import { ImagesModule } from "../modules/images";
 import type {
   CreateFunctionRequest as CreateFunctionRequestType,
   InvokeFunctionRequest as InvokeFunctionRequestType,
@@ -94,6 +95,7 @@ export class QuiltClient {
   public readonly clusters: ClustersModule;
   public readonly agent: AgentModule;
   public readonly functions: FunctionsModule;
+  public readonly images: ImagesModule;
   public readonly elasticity: ElasticityModule;
   public readonly monitors: MonitorsModule;
   public readonly master: MasterModule;
@@ -125,6 +127,7 @@ export class QuiltClient {
     this.clusters = new ClustersModule(this);
     this.agent = new AgentModule(this);
     this.functions = new FunctionsModule(this);
+    this.images = new ImagesModule(this);
     this.elasticity = new ElasticityModule(this);
     this.monitors = new MonitorsModule(this);
     this.master = new MasterModule(this);

@@ -6,6 +6,10 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "quilt": "./dist/cli.js",
+    "quilt-sdk": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -50,5 +54,8 @@
     "tsx": "^4.20.3",
     "typescript": "^5.8.3",
     "ws": "^8.20.0"
+  },
+  "dependencies": {
+    "tar": "^7.4.3"
   }
 }
