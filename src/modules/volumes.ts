@@ -27,7 +27,7 @@ export class VolumesModule {
     });
   }
 
-  public delete(name: string, execution: "sync" | "async" = "sync") {
+  public delete(name: string, execution: "sync" | "async" = "async") {
     return this.client.delete("/api/volumes/{name}", {
       pathParams: { name },
       query: { execution },

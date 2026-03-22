@@ -206,21 +206,14 @@ export class PlatformModule {
     });
   }
 
-  public iccExecBroadcast(
-    body: {
-      command:
-        | string
-        | string[]
-        | { cmd: string | string[] }
-        | { cmd_b64: string }
-        | { parts_b64: string[] };
-      workdir?: string;
-      capture_output?: boolean;
-      timeout_ms?: number;
-      detach?: boolean;
-      targets?: { container_ids?: string[]; include_non_running?: boolean; limit?: number };
-    },
-  ) {
+  public iccExecBroadcast(body: {
+    command: string[];
+    workdir?: string;
+    capture_output?: boolean;
+    timeout_ms?: number;
+    detach?: boolean;
+    targets?: { container_ids?: string[]; include_non_running?: boolean; limit?: number };
+  }) {
     return this.client.raw<Record<string, unknown>>("post", "/api/icc/exec/broadcast", { body });
   }
 

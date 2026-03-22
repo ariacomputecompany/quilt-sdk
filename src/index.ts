@@ -1,5 +1,10 @@
 export { QuiltApiError } from "./core/errors";
 export { QuiltClient } from "./core/client";
+export type {
+  ElasticityControlContract,
+  ElasticityControlContractPaths,
+  ElasticityControlHeaders,
+} from "./modules/elasticity";
 export type { QuiltClientOptions, QuiltAuth } from "./types/common";
 export type {
   HeaderParams,

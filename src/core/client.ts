@@ -3,6 +3,7 @@ import { ApiKeysModule } from "../modules/api-keys";
 import { AuthModule } from "../modules/auth";
 import { ClustersModule } from "../modules/clusters";
 import { ContainersModule } from "../modules/containers";
+import { ElasticityModule } from "../modules/elasticity";
 import { FunctionsModule } from "../modules/functions";
 import { MasterModule } from "../modules/master";
 import { MonitorsModule } from "../modules/monitors";
@@ -39,6 +40,7 @@ export class QuiltClient {
   public readonly clusters: ClustersModule;
   public readonly agent: AgentModule;
   public readonly functions: FunctionsModule;
+  public readonly elasticity: ElasticityModule;
   public readonly monitors: MonitorsModule;
   public readonly master: MasterModule;
   public readonly terminal: TerminalModule;
@@ -67,6 +69,7 @@ export class QuiltClient {
     this.clusters = new ClustersModule(this);
     this.agent = new AgentModule(this);
     this.functions = new FunctionsModule(this);
+    this.elasticity = new ElasticityModule(this);
     this.monitors = new MonitorsModule(this);
     this.master = new MasterModule(this);
     this.terminal = new TerminalModule(this);

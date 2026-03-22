@@ -20,7 +20,7 @@ export class ContainersModule {
       working_directory?: string | null;
       strict?: boolean | null;
     },
-    execution: "sync" | "async" = "sync",
+    execution: "sync" | "async" = "async",
   ) {
     return this.client.post("/api/containers", {
       query: { execution },
@@ -43,7 +43,7 @@ export class ContainersModule {
         strict?: boolean | null;
       }>;
     },
-    execution: "sync" | "async" = "sync",
+    execution: "sync" | "async" = "async",
   ) {
     return this.client.post("/api/containers/batch", {
       query: { execution },
@@ -55,7 +55,7 @@ export class ContainersModule {
     return this.client.get("/api/containers/{id}", { pathParams: { id: identifier } });
   }
 
-  public remove(identifier: string, execution: "sync" | "async" = "sync") {
+  public remove(identifier: string, execution: "sync" | "async" = "async") {
     return this.client.delete("/api/containers/{id}", {
       pathParams: { id: identifier },
       query: { execution },
@@ -66,7 +66,7 @@ export class ContainersModule {
     return this.client.post("/api/containers/{id}/start", { pathParams: { id: identifier } });
   }
 
-  public stop(identifier: string, execution: "sync" | "async" = "sync") {
+  public stop(identifier: string, execution: "sync" | "async" = "async") {
     return this.client.post("/api/containers/{id}/stop", {
       pathParams: { id: identifier },
       query: { execution },
@@ -87,12 +87,7 @@ export class ContainersModule {
   public exec(
     identifier: string,
     body: {
-      command:
-        | string
-        | string[]
-        | { cmd: string | string[] }
-        | { cmd_b64: string }
-        | { parts_b64: string[] };
+      command: string[];
       workdir?: string;
       capture_output?: boolean;
       timeout_ms?: number;
