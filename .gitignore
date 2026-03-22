@@ -7,3 +7,12 @@ src/generated/platform-contract.ts
 .env
 .env.*
 *.log
+AGENTS.md
+API.md
+API_CONTRACT.json
+implementation
+implementation/
+clean-api
+clean-api/
+clean_api
+clean_api/
