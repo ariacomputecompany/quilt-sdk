@@ -49,6 +49,7 @@ async function main(): Promise<void> {
       `name=${containerName}`,
       `create_operation=${operationId}`,
     ]);
+    await waitForContainerReady(client, containerId);
 
     const list = (await client.containers.list()) as {
       containers: Array<Record<string, unknown>>;
@@ -59,8 +60,12 @@ async function main(): Promise<void> {
     assert(Array.isArray(list.containers), "container list missing");
     assert(String(container.container_id) === containerId, "container lookup mismatch");
     assert(String(byName.container_id) === containerId, "container by-name mismatch");
-    assert(ready.ready === true, "container was not ready");
-    push("containers", true, [`listed=${list.containers.length}`, `ready=${ready.ready}`]);
+    assert(ready.exec_ready === true, "container was not exec-ready");
+    push("containers", true, [
+      `listed=${list.containers.length}`,
+      `exec_ready=${ready.exec_ready}`,
+      `network_ready=${ready.network_ready}`,
+    ]);
 
     await client.platform.patchContainerEnv(containerId, {
       HTTP_VERIFY: "patched",
@@ -263,7 +268,14 @@ async function main(): Promise<void> {
       `container_cleanup_keys=${Object.keys(containerCleanup).length}`,
     ]);
 
-    const gui = await client.containers.guiUrl(containerId);
+    const guiContainer = await createPublicContainer(client, "http-verify-gui", {
+      image: "prod-gui",
+    });
+    cleanup.defer(async () => deletePublicContainer(client, guiContainer.containerId));
+    await waitForContainerReady(client, guiContainer.containerId, {
+      requireGui: true,
+    });
+    const gui = await client.containers.guiUrl(guiContainer.containerId);
     const iccRoot = await client.platform.iccRoot();
     const iccHealth = await client.platform.iccHealth();
     const iccStreams = await client.platform.iccStreams();
@@ -453,12 +465,17 @@ async function readFirstSseEvent(client: QuiltClient, timeoutMs = 5_000): Promis
 async function createPublicContainer(
   client: QuiltClient,
   namePrefix: string,
+  options: {
+    image?: "prod" | "prod-gui";
+    command?: string[];
+  } = {},
 ): Promise<{ containerId: string; name: string; operationId: string }> {
   const name = suffix(namePrefix);
+  const image = options.image ?? "prod";
   const accepted = await client.containers.create({
     name,
-    image: "prod",
-    command: ["tail", "-f", "/dev/null"],
+    image,
+    ...(image === "prod-gui" ? {} : { command: options.command ?? ["tail", "-f", "/dev/null"] }),
     memory_limit_mb: 256,
     cpu_limit_percent: 25,
   });
@@ -476,6 +493,24 @@ async function createPublicContainer(
       : String((await client.containers.byName(name)).container_id ?? "");
   assert(containerId, `container create for ${name} did not yield a container_id`);
   return { containerId, name, operationId: accepted.operation_id };
+}
+
+async function waitForContainerReady(
+  client: QuiltClient,
+  containerId: string,
+  options: { requireGui?: boolean } = {},
+  timeoutMs = 180_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const ready = await client.platform.checkContainerReady(containerId);
+    const guiReady = options.requireGui ? ready.gui_ready === true : true;
+    if (ready.exec_ready === true && ready.network_ready === true && guiReady) {
+      return;
+    }
+    await sleep(500);
+  }
+  throw new Error(`container ${containerId} did not become ready within ${timeoutMs}ms`);
 }
 
 async function deletePublicContainer(client: QuiltClient, containerId: string): Promise<void> {

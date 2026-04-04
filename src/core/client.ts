@@ -24,7 +24,6 @@ import type {
   ElasticityWorkloadPlacementPreference as ElasticityWorkloadPlacementPreferenceType,
 } from "../modules/elasticity";
 import { FunctionsModule } from "../modules/functions";
-import { ImagesModule } from "../modules/images";
 import type {
   CreateFunctionRequest as CreateFunctionRequestType,
   InvokeFunctionRequest as InvokeFunctionRequestType,
@@ -35,7 +34,7 @@ import type {
   QuiltInvocation as QuiltInvocationType,
   UpdateFunctionRequest as UpdateFunctionRequestType,
 } from "../modules/functions";
-import { MasterModule } from "../modules/master";
+import { ImagesModule } from "../modules/images";
 import { MonitorsModule } from "../modules/monitors";
 import { NotificationsModule } from "../modules/notifications";
 import { PlatformModule } from "../modules/platform";
@@ -98,7 +97,6 @@ export class QuiltClient {
   public readonly images: ImagesModule;
   public readonly elasticity: ElasticityModule;
   public readonly monitors: MonitorsModule;
-  public readonly master: MasterModule;
   public readonly terminal: TerminalModule;
   public readonly events: EventsClient;
   public readonly terminalRealtime: TerminalRealtimeClient;
@@ -130,7 +128,6 @@ export class QuiltClient {
     this.images = new ImagesModule(this);
     this.elasticity = new ElasticityModule(this);
     this.monitors = new MonitorsModule(this);
-    this.master = new MasterModule(this);
     this.terminal = new TerminalModule(this);
     this.events = new EventsClient(this);
     this.terminalRealtime = new TerminalRealtimeClient(this);

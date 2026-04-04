@@ -24,14 +24,14 @@
   "scripts": {
     "clean": "rm -rf dist coverage .tsbuildinfo generated",
     "generate:types": "node ./scripts/generate-contract-types.mjs",
-    "build": "bun run generate:types && tsc -p tsconfig.build.json",
-    "typecheck": "bun run generate:types && tsc -p tsconfig.json --noEmit",
+    "build": "npm run generate:types && tsc -p tsconfig.build.json && node ./scripts/fix-esm-imports.mjs",
+    "typecheck": "npm run generate:types && tsc -p tsconfig.json --noEmit",
     "examples:typecheck": "tsc -p tsconfig.examples.json --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage",
-    "examples:all": "bun run example:containers && bun run example:images && bun run example:sdk && bun run example:clusters && bun run example:terminal && bun run example:elasticity && bun run example:lifecycle",
+    "test": "${BUN_BIN:-$HOME/.bun/bin/bun} test",
+    "test:coverage": "${BUN_BIN:-$HOME/.bun/bin/bun} test --coverage",
+    "examples:all": "npm run example:containers && npm run example:images && npm run example:sdk && npm run example:clusters && npm run example:terminal && npm run example:elasticity && npm run example:lifecycle",
     "example:containers": "node --env-file=.env --import tsx examples/containers-volumes-and-network.ts",
     "example:images": "node --env-file=.env --import tsx examples/docker-and-oci-images.ts",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-runtime-and-functions.ts",
@@ -39,7 +39,7 @@
     "example:terminal": "node --env-file=.env --import tsx examples/terminal-and-icc.ts",
     "example:elasticity": "node --env-file=.env --import tsx examples/elasticity-control.ts",
     "example:lifecycle": "node --env-file=.env --import tsx examples/lifecycle-and-failures.ts",
-    "prepublishOnly": "bun run clean && bun run lint && bun run typecheck && bun run examples:typecheck && bun run test && bun run build"
+    "prepublishOnly": "npm run clean && npm run lint && npm run typecheck && npm run examples:typecheck && npm run test && npm run build"
   },
   "keywords": ["quilt", "sdk", "api", "typescript", "bun"],
   "license": "MIT",

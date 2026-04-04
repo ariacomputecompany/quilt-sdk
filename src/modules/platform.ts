@@ -8,6 +8,21 @@ export interface OperationStatus {
   error?: unknown;
 }
 
+export interface ContainerReadyResponse {
+  state: string;
+  uptime_seconds?: number;
+  exec_ready: boolean;
+  network_ready: boolean;
+  gui_ready?: boolean;
+  checks: {
+    state_running: boolean;
+    minit_responsive: boolean;
+    network_configured: boolean;
+    managed_image_valid: boolean;
+    gui_backend_reachable?: boolean;
+  };
+}
+
 export class PlatformModule {
   public constructor(private readonly client: QuiltClient) {}
 
@@ -70,7 +85,7 @@ export class PlatformModule {
   }
 
   public checkContainerReady(containerIdentifier: string) {
-    return this.client.raw<{ ready: boolean }>("get", "/api/containers/{id}/ready", {
+    return this.client.raw<ContainerReadyResponse>("get", "/api/containers/{id}/ready", {
       pathParams: { id: containerIdentifier },
     });
   }
