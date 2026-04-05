@@ -11,10 +11,6 @@ export interface OperationStatus {
 export type ContainerReadyResponse = SuccessResponse<"/api/containers/{id}/ready", "get">;
 export type ContainerForkRequest = { name?: string };
 export type SnapshotCloneRequest = JsonRequestBody<"/api/snapshots/{id}/clone", "post">;
-export type IccContainerReplayRequest = JsonRequestBody<
-  "/api/containers/{id}/inbox/replay",
-  "post"
->;
 
 export class PlatformModule {
   public constructor(private readonly client: QuiltClient) {}
@@ -288,13 +284,6 @@ export class PlatformModule {
     const { container_identifier, ...rest } = body;
     return this.client.post("/api/icc/replay", {
       body: { ...rest, container_id: container_identifier },
-    });
-  }
-
-  public iccContainerReplay(containerIdentifier: string, body: IccContainerReplayRequest = {}) {
-    return this.client.post("/api/containers/{id}/inbox/replay", {
-      pathParams: { id: containerIdentifier },
-      body,
     });
   }
 

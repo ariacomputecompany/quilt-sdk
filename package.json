@@ -25,6 +25,7 @@
     "clean": "rm -rf dist coverage .tsbuildinfo generated",
     "generate:types": "node ./scripts/generate-contract-types.mjs",
     "build": "npm run generate:types && tsc -p tsconfig.build.json && node ./scripts/fix-esm-imports.mjs",
+    "parity:backend": "node ./scripts/check-backend-parity.mjs",
     "typecheck": "npm run generate:types && tsc -p tsconfig.json --noEmit",
     "examples:typecheck": "tsc -p tsconfig.examples.json --noEmit",
     "lint": "biome check .",

@@ -187,7 +187,6 @@ Recent contract-alignment details now reflected in the SDK:
 
 - `client.containers.create()` and `createBatch()` accept the full backend request shape, including `gpu_count` and `gpu_ids`
 - snapshot responses include `source_container_name` when the backend captured it at snapshot creation time
-- container-scoped ICC replay is available through `client.platform.iccContainerReplay(containerId, body)`
 
 ## Realtime
 
@@ -264,6 +263,9 @@ QUILT_JWT=<jwt>
 ```bash
 bun run lint
 bun run typecheck
+node ./scripts/check-backend-parity.mjs
+fozzy validate tests/fozzy/sdk_backend_parity.guard.fozzy.json
+fozzy run tests/fozzy/sdk_backend_parity.guard.fozzy.json --json --proc-backend host --http-backend host --fs-backend host
 bun run examples:typecheck
 bun run test
 bun run build

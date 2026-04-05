@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "name": "sdk-backend-parity-guard",
+  "steps": [
+    {
+      "type": "trace_event",
+      "name": "sdk_backend_parity_guard_start",
+      "fields": {
+        "component": "sdk",
+        "focus": "backend_route_doc_contract_parity"
+      }
+    },
+    {
+      "type": "proc_spawn",
+      "cmd": "bash",
+      "args": [
+        "-lc",
+        "set -euo pipefail; npm run lint && npm run typecheck && npm run examples:typecheck && npm run test && npm run build && npm run parity:backend"
+      ],
+      "expect_exit": 0
+    },
+    {
+      "type": "assert_ok",
+      "value": true
+    }
+  ]
+}

@@ -87,7 +87,6 @@ Use this for:
 - volume create, file I/O, and archive upload
 - container archive upload
 - network, diagnostics, egress, monitors, DNS, cleanup, GUI, ICC, and functions
-  including container-scoped ICC replay through `client.platform.iccContainerReplay(...)`
 
 Primary SDK surfaces:
 
