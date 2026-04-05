@@ -40,6 +40,7 @@ bun run example:images
 bun run example:sdk
 bun run example:clusters
 bun run example:terminal
+bun run example:stream
 bun run example:elasticity
 bun run example:lifecycle
 bun run examples:all
@@ -70,6 +71,7 @@ The SDK is organized around major platform surfaces:
 - `client.agent` for join-token and node-token authenticated agent calls
 - `client.functions` for serverless lifecycle, invoke, versions, and pool status
 - `client.elasticity` for resize, pool targeting, and orchestrator-safe control actions
+- `client.containerStreams` for live non-PTY NDJSON command output
 - `client.terminal` and `client.terminalRealtime` for terminal session lifecycle and WebSocket attach
 - `client.events` for SSE streams
 - `client.raw(...)` for authenticated access to backend routes that are still intentionally exposed as raw contract calls
@@ -190,6 +192,22 @@ Primary SDK surfaces:
 - `client.platform`
 - `client.terminal`
 - `client.terminalRealtime`
+
+### `container-stream.ts`
+
+Use this for live command output consumption without PTY semantics.
+
+It covers:
+
+- container create and cleanup
+- `client.containerStreams.open(...)`
+- decoding base64 `stdout` and `stderr` frames
+- terminal `exit` frame handling
+
+Primary SDK surfaces:
+
+- `client.containers`
+- `client.containerStreams`
 
 ### `elasticity-control.ts`
 

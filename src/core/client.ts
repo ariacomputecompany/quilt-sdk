@@ -42,6 +42,11 @@ import { ProjectsModule } from "../modules/projects";
 import { SystemModule } from "../modules/system";
 import { TerminalModule } from "../modules/terminal";
 import { VolumesModule } from "../modules/volumes";
+import { ContainerStreamsClient } from "../realtime/container-stream";
+import type {
+  ContainerStreamFrame as ContainerStreamFrameType,
+  ContainerStreamRequest as ContainerStreamRequestType,
+} from "../realtime/container-stream";
 import { EventsClient } from "../realtime/events";
 import type {
   QuiltEventType as QuiltEventTypeType,
@@ -99,6 +104,7 @@ export class QuiltClient {
   public readonly monitors: MonitorsModule;
   public readonly terminal: TerminalModule;
   public readonly events: EventsClient;
+  public readonly containerStreams: ContainerStreamsClient;
   public readonly terminalRealtime: TerminalRealtimeClient;
   public readonly platform: PlatformModule;
 
@@ -130,6 +136,7 @@ export class QuiltClient {
     this.monitors = new MonitorsModule(this);
     this.terminal = new TerminalModule(this);
     this.events = new EventsClient(this);
+    this.containerStreams = new ContainerStreamsClient(this);
     this.terminalRealtime = new TerminalRealtimeClient(this);
     this.platform = new PlatformModule(this);
   }
@@ -209,6 +216,25 @@ export class QuiltClient {
     return this.transport.requestRaw<TResponse>(method, path, options);
   }
 
+  public rawResponse(method: string, path: string, options?: RawRequestOptions): Promise<Response> {
+    return this.transport.requestResponse(method, path, options);
+  }
+
+  public response<M extends HttpMethod, P extends StablePathForMethod<M>>(
+    method: M,
+    path: P,
+    options?: StableRequestOptions<P, M>,
+  ): Promise<Response> {
+    return this.transport.requestResponse(method, path, options as RawRequestOptions | undefined);
+  }
+
+  public postResponse<P extends StablePathForMethod<"post">>(
+    path: P,
+    options?: StableRequestOptions<P, "post">,
+  ): Promise<Response> {
+    return this.response("post", path, options);
+  }
+
   public async awaitOperation(
     operationId: string,
     options: {
@@ -278,6 +304,8 @@ export declare namespace QuiltClient {
   export namespace Realtime {
     export type EventType = QuiltEventTypeType;
     export type SseEvent = QuiltSseEventType;
+    export type ContainerStreamRequest = ContainerStreamRequestType;
+    export type ContainerStreamFrame = ContainerStreamFrameType;
     export type TerminalAttachOptions = TerminalAttachOptionsType;
     export type TerminalClientMessage = TerminalClientMessageType;
     export type TerminalServerMessage = TerminalServerMessageType;

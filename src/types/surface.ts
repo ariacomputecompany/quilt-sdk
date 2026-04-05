@@ -62,9 +62,11 @@ type PayloadFromResponse<Resp> = Resp extends { content: infer Content }
     ? Json
     : Content extends { "text/plain": infer Text }
       ? Text
-      : Content extends { "text/event-stream": infer Stream }
-        ? Stream
-        : unknown
+      : Content extends { "application/x-ndjson": infer Ndjson }
+        ? Ndjson
+        : Content extends { "text/event-stream": infer Stream }
+          ? Stream
+          : unknown
   : undefined;
 
 type SuccessPayloadsFor<Op> =

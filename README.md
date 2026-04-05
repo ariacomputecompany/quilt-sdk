@@ -80,6 +80,7 @@ Primary SDK surfaces:
 - `client.agent` for join-token and node-token authenticated agent calls
 - `client.functions` for serverless lifecycle, invoke, versions, invocations, and pool status
 - `client.elasticity` for resize, pool targeting, and orchestrator-safe control actions
+- `client.containerStreams` for live non-PTY command output streaming over NDJSON
 - `client.terminal` and `client.terminalRealtime` for terminal session lifecycle and WebSocket attach
 - `client.events` for SSE streams
 - `client.raw(...)` for authenticated access to backend routes that are intentionally still exposed as raw contract calls
@@ -151,6 +152,7 @@ npx quilt --api-key "$QUILT_API_KEY" health
 npx quilt --api-key "$QUILT_API_KEY" oci pull --reference docker.io/library/alpine:3.20
 npx quilt --api-key "$QUILT_API_KEY" build --context . --dockerfile Dockerfile --tag docker.io/acme/my-app:latest
 npx quilt --api-key "$QUILT_API_KEY" container create --image docker.io/acme/my-app:latest --oci --wait -- sleep 60
+npx quilt --api-key "$QUILT_API_KEY" stream ctr_123 -- /bin/sh -lc 'echo hello && echo warn 1>&2'
 ```
 
 ## Public Types
@@ -179,6 +181,7 @@ Use the SDK in the same execution style the backend expects:
 
 - treat container lifecycle mutations as operation-driven when they return operation metadata
 - treat exec as submit-and-track, not inline command execution
+- treat `client.containerStreams.open(...)` as the live non-PTY command output surface
 - use terminal attach and WebSocket flows for interactive sessions
 - invoke a shell explicitly when shell parsing is required
 - prefer typed module methods over `client.raw(...)`
@@ -214,6 +217,24 @@ ws.addEventListener("message", (msg) => {
     console.log(parsed);
   }
 });
+```
+
+### Container Stream NDJSON
+
+```ts
+const frames = await client.containerStreams.open("ctr_123", {
+  command: ["/bin/sh", "-lc", "echo hello && echo warn 1>&2"],
+  timeout_ms: 30_000,
+});
+
+for await (const frame of frames) {
+  if (frame.type === "stdout") {
+    process.stdout.write(Buffer.from(frame.data_b64, "base64"));
+  }
+  if (frame.type === "stderr") {
+    process.stderr.write(Buffer.from(frame.data_b64, "base64"));
+  }
+}
 ```
 
 ## Examples

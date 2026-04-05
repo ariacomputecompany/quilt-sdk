@@ -1,6 +1,6 @@
 {
   "name": "quilt-sdk",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Fully type-safe TypeScript SDK for Quilt HTTP APIs",
   "type": "module",
   "main": "./dist/index.js",
@@ -32,12 +32,13 @@
     "lint:fix": "biome check --write .",
     "test": "${BUN_BIN:-$HOME/.bun/bin/bun} test",
     "test:coverage": "${BUN_BIN:-$HOME/.bun/bin/bun} test --coverage",
-    "examples:all": "npm run example:containers && npm run example:images && npm run example:sdk && npm run example:clusters && npm run example:terminal && npm run example:elasticity && npm run example:lifecycle",
+    "examples:all": "npm run example:containers && npm run example:images && npm run example:sdk && npm run example:clusters && npm run example:terminal && npm run example:stream && npm run example:elasticity && npm run example:lifecycle",
     "example:containers": "node --env-file=.env --import tsx examples/containers-volumes-and-network.ts",
     "example:images": "node --env-file=.env --import tsx examples/docker-and-oci-images.ts",
     "example:sdk": "node --env-file=.env --import tsx examples/sdk-runtime-and-functions.ts",
     "example:clusters": "node --env-file=.env --import tsx examples/clusters-nodes-workloads-and-k8s.ts",
     "example:terminal": "node --env-file=.env --import tsx examples/terminal-and-icc.ts",
+    "example:stream": "node --env-file=.env --import tsx examples/container-stream.ts",
     "example:elasticity": "node --env-file=.env --import tsx examples/elasticity-control.ts",
     "example:lifecycle": "node --env-file=.env --import tsx examples/lifecycle-and-failures.ts",
     "prepublishOnly": "npm run clean && npm run lint && npm run typecheck && npm run examples:typecheck && npm run test && npm run build"

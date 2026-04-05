@@ -74,6 +74,7 @@ function buildCommands(): Map<string, CommandHandler> {
   return new Map<string, CommandHandler>([
     ["health", healthCommand],
     ["build", buildCommand],
+    ["stream", streamCommand],
     ["container create", containerCreateCommand],
     ["container list", containerListCommand],
     ["container get", containerGetCommand],
@@ -108,6 +109,9 @@ function commandKey(args: string[]): string {
     ) {
       return two;
     }
+  }
+  if (args[0] === "stream") {
+    return "stream";
   }
   return args[0] ?? "";
 }
@@ -400,6 +404,66 @@ async function containerExecCommand(ctx: CliContext, args: string[]): Promise<vo
       ...(timeoutMs !== undefined ? { timeout_ms: timeoutMs } : {}),
     }),
   );
+}
+
+async function streamCommand(ctx: CliContext, args: string[]): Promise<void> {
+  const identifier = args[0];
+  if (!identifier) {
+    throw new Error("stream requires <id-or-name>");
+  }
+
+  const parsed = parseOptions(args.slice(1), {
+    "--workdir": "",
+    "--env": [],
+    "--timeout-ms": "",
+    "--stdin": "",
+    "--": [],
+  });
+  const command = arrayOption(parsed, "--");
+  if (command.length === 0) {
+    throw new Error("stream requires a command after --");
+  }
+
+  const workdir = optionalString(parsed, "--workdir");
+  const timeoutMs = numberOption(parsed, "--timeout-ms");
+  const stdin = optionalString(parsed, "--stdin");
+  const environment = keyValueMap(arrayOption(parsed, "--env"));
+  const frames = await ctx.client.containerStreams.open(identifier, {
+    command,
+    ...(workdir ? { working_directory: workdir } : {}),
+    ...(Object.keys(environment).length > 0 ? { environment } : {}),
+    ...(stdin ? { stdin_data: stdin } : {}),
+    ...(timeoutMs !== undefined ? { timeout_ms: timeoutMs } : {}),
+  });
+
+  for await (const frame of frames) {
+    if (ctx.json) {
+      process.stdout.write(`${JSON.stringify(frame)}\n`);
+      continue;
+    }
+
+    switch (frame.type) {
+      case "started":
+        process.stderr.write(`stream started pid=${frame.pid} container=${frame.container_id}\n`);
+        break;
+      case "stdout":
+        process.stdout.write(Buffer.from(frame.data_b64, "base64"));
+        break;
+      case "stderr":
+        process.stderr.write(Buffer.from(frame.data_b64, "base64"));
+        break;
+      case "timeout":
+        process.stderr.write(`stream timeout after ${frame.elapsed_ms}ms: ${frame.message}\n`);
+        break;
+      case "exit":
+        process.exitCode = frame.code;
+        return;
+      case "error":
+        throw new Error(frame.message);
+      default:
+        break;
+    }
+  }
 }
 
 async function ociPullCommand(ctx: CliContext, args: string[]): Promise<void> {

@@ -59,6 +59,7 @@ export type {
 export { QUILT_TOOLS } from "./tools/definitions";
 export type { ToolFunctionDefinition } from "./tools/definitions";
 export type { QuiltEventType, QuiltSseEvent } from "./realtime/events";
+export type { ContainerStreamFrame, ContainerStreamRequest } from "./realtime/container-stream";
 export type {
   TerminalAttachOptions,
   TerminalClientMessage,

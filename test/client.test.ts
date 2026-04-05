@@ -43,4 +43,38 @@ describe("QuiltClient", () => {
 
     await expect(quilt.system.info()).rejects.toBeInstanceOf(QuiltApiError);
   });
+
+  test("parses container stream NDJSON frames", async () => {
+    const encoder = new TextEncoder();
+    const quilt = QuiltClient.connect({
+      baseUrl: "https://backend.quilt.sh",
+      apiKey: "quilt_sk_test",
+      fetch: async () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(
+              encoder.encode(
+                '{"type":"started","container_id":"ctr_1","pid":1234}\n{"type":"stdout","data_b64":"aGVsbG8K"}\n{"type":"exit","code":0,"elapsed_ms":9}\n',
+              ),
+            );
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          status: 200,
+          headers: { "content-type": "application/x-ndjson" },
+        });
+      },
+    });
+
+    const frames = await quilt.containerStreams.open("ctr_1", {
+      command: ["echo", "hello"],
+    });
+    const seen: string[] = [];
+    for await (const frame of frames) {
+      seen.push(frame.type);
+    }
+
+    expect(seen).toEqual(["started", "stdout", "exit"]);
+  });
 });

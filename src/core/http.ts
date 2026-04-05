@@ -58,11 +58,12 @@ export class QuiltTransport {
     path: P,
     options?: StableRequestOptions<P, M>,
   ): Promise<SuccessResponse<P, M>> {
-    return this.requestRaw<SuccessResponse<P, M>>(
+    const response = await this.requestResponse(
       method,
       path,
       options as RawRequestOptions | undefined,
     );
+    return await parseResponse<SuccessResponse<P, M>>(response);
   }
 
   public async requestRaw<TResponse>(
@@ -70,6 +71,15 @@ export class QuiltTransport {
     path: string,
     options?: RawRequestOptions,
   ): Promise<TResponse> {
+    const response = await this.requestResponse(method, path, options);
+    return await parseResponse<TResponse>(response);
+  }
+
+  public async requestResponse(
+    method: string,
+    path: string,
+    options?: RawRequestOptions,
+  ): Promise<Response> {
     const query = {
       ...(options?.query ?? {}),
       ...(options?.authInQuery ? this.authQueryParam() : {}),
@@ -113,7 +123,10 @@ export class QuiltTransport {
         init.body = bodyInit;
       }
       const response = await this.fetchImpl(url, init);
-      return await parseResponse<TResponse>(response);
+      if (!response.ok) {
+        await throwApiError(response);
+      }
+      return response;
     } finally {
       clearTimeout(timeout);
     }
@@ -176,6 +189,7 @@ async function parseResponse<TResponse>(response: Response): Promise<TResponse> 
   const isJson = contentType.includes("application/json");
   const isText =
     contentType.includes("text/plain") ||
+    contentType.includes("application/x-ndjson") ||
     contentType.includes("text/event-stream") ||
     contentType.startsWith("text/");
 
@@ -210,6 +224,28 @@ async function parseResponse<TResponse>(response: Response): Promise<TResponse> 
   }
 
   return (await response.arrayBuffer()) as TResponse;
+}
+
+async function throwApiError(response: Response): Promise<never> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
+  const isJson = contentType.includes("application/json");
+  const isText =
+    contentType.includes("text/plain") ||
+    contentType.includes("text/event-stream") ||
+    contentType.includes("application/x-ndjson") ||
+    contentType.startsWith("text/");
+
+  const errorBody = isJson
+    ? ((await response.json()) as unknown)
+    : isText
+      ? ((await response.text()) as unknown)
+      : null;
+
+  throw new QuiltApiError({
+    message: `HTTP ${response.status} ${response.statusText}`,
+    status: response.status,
+    body: errorBody,
+  });
 }
 
 function hasContentType(headers: Record<string, string>): boolean {

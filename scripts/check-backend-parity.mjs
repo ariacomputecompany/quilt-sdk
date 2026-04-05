@@ -8,9 +8,10 @@ const backendContractPath = path.resolve(repoRoot, "../quilt-prod/API_CONTRACT.j
 const backendApiDocPath = path.resolve(repoRoot, "../quilt-prod/API.md");
 const backendRoutesPath = path.resolve(repoRoot, "../quilt-prod/src/http/routes.rs");
 
-const clientMethodPattern = /client\.(get|post|put|patch|delete)\(\s*(["`])([\s\S]*?)\2/gm;
+const clientMethodPattern =
+  /client\.(get|post|put|patch|delete|getResponse|postResponse|putResponse|patchResponse|deleteResponse)\(\s*(["`])([\s\S]*?)\2/gm;
 const rawMethodPattern =
-  /client\.raw(?:<[\s\S]*?>)?\(\s*(["`])([A-Za-z]+)\1\s*,\s*(["`])([\s\S]*?)\3/gm;
+  /client\.raw(?:<[\s\S]*?>)?(?:Response)?\(\s*(["`])([A-Za-z]+)\1\s*,\s*(["`])([\s\S]*?)\3/gm;
 const eventsPathPattern = /path:\s*(["`])([\s\S]*?)\1/gm;
 const apiDocRoutePattern = /^### `([A-Z]+) (\/api\/[^`]+)`$/gm;
 
@@ -28,7 +29,7 @@ async function main() {
     const source = await readFile(filePath, "utf8");
 
     for (const match of source.matchAll(clientMethodPattern)) {
-      const method = match[1]?.toLowerCase();
+      const method = match[1]?.replace(/Response$/, "").toLowerCase();
       const routeLiteral = match[3];
       if (!method || !routeLiteral || !routeLiteral.includes("/api/")) {
         continue;
