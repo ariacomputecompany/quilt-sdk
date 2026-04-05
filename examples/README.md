@@ -83,9 +83,11 @@ Use this for:
 - health and SSE readiness
 - container create, lookup, readiness, env updates, exec, jobs, and processes
 - snapshots, clone, and fork
+  snapshot responses now include `source_container_name` when present in backend state
 - volume create, file I/O, and archive upload
 - container archive upload
 - network, diagnostics, egress, monitors, DNS, cleanup, GUI, ICC, and functions
+  including container-scoped ICC replay through `client.platform.iccContainerReplay(...)`
 
 Primary SDK surfaces:
 

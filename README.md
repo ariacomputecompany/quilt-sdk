@@ -183,6 +183,12 @@ Use the SDK in the same execution style the backend expects:
 - invoke a shell explicitly when shell parsing is required
 - prefer typed module methods over `client.raw(...)`
 
+Recent contract-alignment details now reflected in the SDK:
+
+- `client.containers.create()` and `createBatch()` accept the full backend request shape, including `gpu_count` and `gpu_ids`
+- snapshot responses include `source_container_name` when the backend captured it at snapshot creation time
+- container-scoped ICC replay is available through `client.platform.iccContainerReplay(containerId, body)`
+
 ## Realtime
 
 ### SSE

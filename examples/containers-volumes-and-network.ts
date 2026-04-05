@@ -104,7 +104,11 @@ async function main(): Promise<void> {
       `processes=${processes.processes.length}`,
     ]);
 
-    const snapshot = (await client.containers.snapshot(containerId, {})) as Record<string, unknown>;
+    const snapshot = await client.containers.snapshot(containerId, {
+      consistency_mode: "crash-consistent",
+      network_mode: "reset",
+      volume_mode: "exclude",
+    });
     const snapshotId = String(snapshot.snapshot_id ?? "");
     assert(snapshotId, "snapshot_id missing");
     cleanup.defer(async () => {
@@ -132,6 +136,7 @@ async function main(): Promise<void> {
     >;
     const cloneAccepted = await client.platform.cloneSnapshot(snapshotId, {
       name: suffix("http-clone"),
+      resume_policy: "manual",
     });
     const cloneOp = await waitForOperation(client, String(cloneAccepted.operation_id));
     const cloneContainerId = String(
@@ -156,6 +161,7 @@ async function main(): Promise<void> {
     }
     push("snapshots", true, [
       `snapshot_id=${snapshotId}`,
+      `snapshot_source_name=${String(snapshot.source_container_name ?? "")}`,
       `lineage_keys=${Object.keys(lineage).length}`,
       `clone_status=${String(cloneOp.status)}`,
       `fork_status=${String(forkOp.status)}`,

@@ -99,8 +99,7 @@ async function main(): Promise<void> {
   })) as Record<string, unknown>;
   assert(String(acked.new_state) === "acked", "icc ack did not transition to acked");
 
-  const replay = (await client.platform.iccReplay({
-    container_identifier: containerId,
+  const replay = (await client.platform.iccContainerReplay(containerId, {
     state: "acked",
     limit: 10,
   })) as Record<string, unknown>;

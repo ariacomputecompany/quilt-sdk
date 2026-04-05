@@ -1,39 +1,9 @@
 import type { QuiltClient } from "../core/client";
+import type { JsonRequestBody } from "../types/surface";
 
-export interface CreateFunctionRequest {
-  name: string;
-  handler: string;
-  runtime: string;
-  description?: string | null;
-  environment?: Record<string, string>;
-  memory_limit_mb?: number;
-  cpu_limit_percent?: number;
-  timeout_seconds?: number;
-  min_instances?: number;
-  max_instances?: number;
-  cleanup_on_exit?: boolean;
-  working_directory?: string | null;
-}
-
-export interface UpdateFunctionRequest {
-  name?: string;
-  handler?: string;
-  runtime?: string;
-  description?: string | null;
-  environment?: Record<string, string>;
-  memory_limit_mb?: number;
-  cpu_limit_percent?: number;
-  timeout_seconds?: number;
-  min_instances?: number;
-  max_instances?: number;
-  cleanup_on_exit?: boolean;
-  working_directory?: string | null;
-}
-
-export interface InvokeFunctionRequest {
-  payload?: string;
-  timeout_seconds?: number;
-}
+export type CreateFunctionRequest = JsonRequestBody<"/api/functions", "post">;
+export type UpdateFunctionRequest = JsonRequestBody<"/api/functions/{id}", "put">;
+export type InvokeFunctionRequest = JsonRequestBody<"/api/functions/{id}/invoke", "post">;
 
 export interface QuiltFunction {
   id: string;

@@ -1,4 +1,5 @@
 import type { QuiltClient } from "../core/client";
+import type { JsonRequestBody, SuccessResponse } from "../types/surface";
 
 export interface OperationStatus {
   operation_id: string;
@@ -7,21 +8,13 @@ export interface OperationStatus {
   result?: unknown;
   error?: unknown;
 }
-
-export interface ContainerReadyResponse {
-  state: string;
-  uptime_seconds?: number;
-  exec_ready: boolean;
-  network_ready: boolean;
-  gui_ready?: boolean;
-  checks: {
-    state_running: boolean;
-    minit_responsive: boolean;
-    network_configured: boolean;
-    managed_image_valid: boolean;
-    gui_backend_reachable?: boolean;
-  };
-}
+export type ContainerReadyResponse = SuccessResponse<"/api/containers/{id}/ready", "get">;
+export type ContainerForkRequest = { name?: string };
+export type SnapshotCloneRequest = JsonRequestBody<"/api/snapshots/{id}/clone", "post">;
+export type IccContainerReplayRequest = JsonRequestBody<
+  "/api/containers/{id}/inbox/replay",
+  "post"
+>;
 
 export class PlatformModule {
   public constructor(private readonly client: QuiltClient) {}
@@ -85,14 +78,14 @@ export class PlatformModule {
   }
 
   public checkContainerReady(containerIdentifier: string) {
-    return this.client.raw<ContainerReadyResponse>("get", "/api/containers/{id}/ready", {
+    return this.client.get("/api/containers/{id}/ready", {
       pathParams: { id: containerIdentifier },
     });
   }
 
   public forkContainer(
     containerIdentifier: string,
-    body: { name?: string } = {},
+    body: ContainerForkRequest = {},
     execution: "sync" | "async" = "async",
   ) {
     return this.client.raw<{ success: boolean; operation_id?: string }>(
@@ -108,23 +101,19 @@ export class PlatformModule {
 
   public cloneSnapshot(
     snapshotId: string,
-    body: { name?: string } = {},
+    body: SnapshotCloneRequest,
     execution: "sync" | "async" = "async",
   ) {
-    return this.client.raw<{ success: boolean; operation_id?: string }>(
-      "post",
-      "/api/snapshots/{snapshot_id}/clone",
-      {
-        pathParams: { snapshot_id: snapshotId },
-        query: { execution },
-        body,
-      },
-    );
+    return this.client.post("/api/snapshots/{id}/clone", {
+      pathParams: { id: snapshotId },
+      query: { execution },
+      body,
+    });
   }
 
   public getOperationStatus(operationId: string) {
-    return this.client.raw<OperationStatus>("get", "/api/operations/{operation_id}", {
-      pathParams: { operation_id: operationId },
+    return this.client.raw<OperationStatus>("get", "/api/operations/{id}", {
+      pathParams: { id: operationId },
     });
   }
 
@@ -297,8 +286,15 @@ export class PlatformModule {
     limit?: number;
   }) {
     const { container_identifier, ...rest } = body;
-    return this.client.raw<Record<string, unknown>>("post", "/api/icc/replay", {
+    return this.client.post("/api/icc/replay", {
       body: { ...rest, container_id: container_identifier },
+    });
+  }
+
+  public iccContainerReplay(containerIdentifier: string, body: IccContainerReplayRequest = {}) {
+    return this.client.post("/api/containers/{id}/inbox/replay", {
+      pathParams: { id: containerIdentifier },
+      body,
     });
   }
 

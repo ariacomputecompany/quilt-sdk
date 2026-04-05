@@ -73,7 +73,11 @@ async function main(): Promise<void> {
     });
     lines.push(`process kill ok pid=${pid}`);
 
-    const snapshot = (await client.containers.snapshot(containerId, {})) as Record<string, unknown>;
+    const snapshot = await client.containers.snapshot(containerId, {
+      consistency_mode: "crash-consistent",
+      network_mode: "reset",
+      volume_mode: "exclude",
+    });
     const snapshotId = String(snapshot.snapshot_id ?? "");
     assert(snapshotId, "snapshot_id missing");
     cleanup.defer(async () => {
@@ -96,7 +100,9 @@ async function main(): Promise<void> {
     })) as Record<string, unknown>;
     assert(pin.success === true, "snapshot pin failed");
     assert(unpin.success === true, "snapshot unpin failed");
-    lines.push(`snapshot pin/unpin ok snapshot=${snapshotId}`);
+    lines.push(
+      `snapshot pin/unpin ok snapshot=${snapshotId} source_name=${String(snapshot.source_container_name ?? "")}`,
+    );
 
     const volumeName = suffix("life-vol");
     let renamedVolume = "";

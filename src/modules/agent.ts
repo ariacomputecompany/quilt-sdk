@@ -1,46 +1,27 @@
 import type { QuiltClient } from "../core/client";
+import type { JsonRequestBody, SuccessResponse } from "../types/surface";
 
 export interface AgentAuthHeaders extends Record<string, string> {
   "X-Quilt-Join-Token"?: string;
   "X-Quilt-Node-Token"?: string;
 }
 
-export interface RegisterNodeRequest {
-  name: string;
-  public_ip: string;
-  private_ip: string;
-  agent_version: string;
-  labels?: Record<string, string>;
-  bridge_name?: string;
-  dns_port?: number;
-  egress_limit_mbit?: number;
-}
-
-export interface RegisterNodeResponse {
-  node: {
-    id: string;
-    name: string;
-    state: string;
-  };
-  allocation: {
-    pod_cidr: string;
-    bridge_name: string;
-    dns_port: number;
-    egress_limit_mbit: number;
-  };
-  node_token: string;
-}
-
-export interface HeartbeatRequest {
-  state: string;
-  message?: string;
-}
-
-export interface PlacementReportRequest {
-  container_id: string;
-  state: string;
-  message?: string;
-}
+export type RegisterNodeRequest = JsonRequestBody<
+  "/api/agent/clusters/{cluster_id}/nodes/register",
+  "post"
+>;
+export type RegisterNodeResponse = SuccessResponse<
+  "/api/agent/clusters/{cluster_id}/nodes/register",
+  "post"
+>;
+export type HeartbeatRequest = JsonRequestBody<
+  "/api/agent/clusters/{cluster_id}/nodes/{node_id}/heartbeat",
+  "post"
+>;
+export type PlacementReportRequest = JsonRequestBody<
+  "/api/agent/clusters/{cluster_id}/nodes/{node_id}/placements/{placement_id}/report",
+  "post"
+>;
 
 export class AgentModule {
   public constructor(private readonly client: QuiltClient) {}

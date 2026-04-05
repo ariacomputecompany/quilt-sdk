@@ -1,7 +1,15 @@
 export { QuiltApiError } from "./core/errors";
 export { QuiltClient } from "./core/client";
 export type { OperationStatus } from "./core/client";
-export type { ContainerReadyResponse } from "./modules/platform";
+export type { ContainerReadyResponse, IccContainerReplayRequest } from "./modules/platform";
+export type {
+  ContainerNetworkUpdateRequest,
+  ContainerSnapshotRequest,
+  ContainerSnapshotResponse,
+  ContainerStatus,
+  CreateContainerBatchRequest,
+  CreateContainerRequest,
+} from "./modules/containers";
 export type {
   AgentAuthHeaders,
   HeartbeatRequest,

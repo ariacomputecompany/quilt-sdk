@@ -1,4 +1,13 @@
 import type { QuiltClient } from "../core/client";
+import type { JsonRequestBody, SuccessResponse } from "../types/surface";
+
+export type CreateContainerRequest = JsonRequestBody<"/api/containers", "post">;
+export type CreateContainerBatchRequest = JsonRequestBody<"/api/containers/batch", "post">;
+export type ContainerStatus = SuccessResponse<"/api/containers/{id}", "get">;
+export type ContainerReadyResponse = SuccessResponse<"/api/containers/{id}/ready", "get">;
+export type ContainerNetworkUpdateRequest = JsonRequestBody<"/api/containers/{id}/network", "put">;
+export type ContainerSnapshotRequest = JsonRequestBody<"/api/containers/{id}/snapshot", "post">;
+export type ContainerSnapshotResponse = SuccessResponse<"/api/containers/{id}/snapshot", "post">;
 
 export class ContainersModule {
   public constructor(private readonly client: QuiltClient) {}
@@ -7,44 +16,14 @@ export class ContainersModule {
     return this.client.get("/api/containers", { query });
   }
 
-  public create(
-    body: {
-      name?: string | null;
-      image?: string | null;
-      oci?: boolean | null;
-      command?: string[] | null;
-      environment?: Record<string, string> | null;
-      memory_limit_mb?: number | null;
-      cpu_limit_percent?: number | null;
-      volumes?: string[] | null;
-      working_directory?: string | null;
-      strict?: boolean | null;
-    },
-    execution: "sync" | "async" = "async",
-  ) {
+  public create(body: CreateContainerRequest, execution: "sync" | "async" = "async") {
     return this.client.post("/api/containers", {
       query: { execution },
       body,
     });
   }
 
-  public createBatch(
-    body: {
-      items: Array<{
-        name?: string | null;
-        image?: string | null;
-        oci?: boolean | null;
-        command?: string[] | null;
-        environment?: Record<string, string> | null;
-        memory_limit_mb?: number | null;
-        cpu_limit_percent?: number | null;
-        volumes?: string[] | null;
-        working_directory?: string | null;
-        strict?: boolean | null;
-      }>;
-    },
-    execution: "sync" | "async" = "async",
-  ) {
+  public createBatch(body: CreateContainerBatchRequest, execution: "sync" | "async" = "async") {
     return this.client.post("/api/containers/batch", {
       query: { execution },
       body,
@@ -114,7 +93,7 @@ export class ContainersModule {
   }
 
   public ready(identifier: string) {
-    return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/ready", {
+    return this.client.get("/api/containers/{id}/ready", {
       pathParams: { id: identifier },
     });
   }
@@ -126,20 +105,20 @@ export class ContainersModule {
   }
 
   public networkGet(identifier: string) {
-    return this.client.raw<Record<string, unknown>>("get", "/api/containers/{id}/network", {
+    return this.client.get("/api/containers/{id}/network", {
       pathParams: { id: identifier },
     });
   }
 
-  public networkSet(identifier: string, body: { ip_address?: string; gateway?: string }) {
-    return this.client.raw<Record<string, unknown>>("put", "/api/containers/{id}/network", {
+  public networkSet(identifier: string, body: ContainerNetworkUpdateRequest) {
+    return this.client.put("/api/containers/{id}/network", {
       pathParams: { id: identifier },
       body,
     });
   }
 
   public networkSetup(identifier: string) {
-    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/network/setup", {
+    return this.client.post("/api/containers/{id}/network/setup", {
       pathParams: { id: identifier },
     });
   }
@@ -164,7 +143,7 @@ export class ContainersModule {
   }
 
   public removeRoute(identifier: string, body: { destination: string }) {
-    return this.client.raw<Record<string, unknown>>("delete", "/api/containers/{id}/routes", {
+    return this.client.delete("/api/containers/{id}/routes", {
       pathParams: { id: identifier },
       body,
     });
@@ -176,10 +155,10 @@ export class ContainersModule {
     });
   }
 
-  public snapshot(identifier: string, body?: Record<string, unknown>) {
-    return this.client.raw<Record<string, unknown>>("post", "/api/containers/{id}/snapshot", {
+  public snapshot(identifier: string, body: ContainerSnapshotRequest) {
+    return this.client.post("/api/containers/{id}/snapshot", {
       pathParams: { id: identifier },
-      body: body ?? {},
+      body,
     });
   }
 
